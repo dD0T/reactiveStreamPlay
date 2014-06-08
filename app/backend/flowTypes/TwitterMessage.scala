@@ -1,7 +1,4 @@
-package backend
-
-import shapeless._
-import syntax.typeable._
+package backend.flowTypes
 
 case class TwitterMessage(override val uid: Long, message: String) extends FlowObject {
   override def content(field: String): Option[Any] = field match {

@@ -1,4 +1,4 @@
-import backend.{FlowObject, Sentiment, WordObject, TwitterMessage}
+import backend.flowTypes.{WordObject, TwitterMessage, Sentiment, FlowObject}
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._

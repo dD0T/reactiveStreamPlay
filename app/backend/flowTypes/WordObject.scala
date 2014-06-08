@@ -1,4 +1,4 @@
-package backend
+package backend.flowTypes
 
 case class WordObject(override val uid: Long, override val originUid:Long, word: String) extends FlowObject {
   override def content(field: String): Option[Any] = field match {

@@ -1,4 +1,4 @@
-package backend
+package backend.flowTypes
 
 case class Sentiment(override val uid: Long, override val originUid: Long, sentiment: Double) extends FlowObject {
   override def fields(): List[String] = List("default", "sentiment")
