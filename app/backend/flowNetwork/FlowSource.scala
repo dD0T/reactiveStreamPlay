@@ -1,12 +1,16 @@
 package backend.flowNetwork
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Props, ActorRef, Actor}
 import akka.event.Logging
 import scala.util.Random
 import backend.flowTypes.Sentiment
 import scala.concurrent.duration._
 
 case class SetTarget(target: ActorRef)
+
+object FlowSource {
+  def props(target: ActorRef): Props = Props(new FlowSource(target))
+}
 
 class FlowSource(var target: ActorRef) extends Actor {
   import context.dispatcher

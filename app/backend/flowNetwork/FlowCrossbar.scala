@@ -11,6 +11,10 @@ case class RemoveTarget(target: ActorRef)
 case object GetTargets
 case class Targets(targets: Set[ActorRef])
 
+object FlowCrossbar {
+  def props(): Props = Props(new FlowCrossbar)
+}
+
 class FlowCrossbar extends Actor {
   var targets = Set[ActorRef]()
   val log = Logging(context.system, this)
