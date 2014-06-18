@@ -1,8 +1,8 @@
+import backend.NextFlowUID
 import backend.flowNetwork._
 import backend.flowNetwork.SetTarget
 import backend.flowNetwork.ThroughputUpdate
-import backend.flowTypes.TwitterMessage
-import backend.flowTypes.{TwitterMessage, Sentiment}
+import backend.flowTypes.{WordObject, FlowObject, TwitterMessage, Sentiment}
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
@@ -31,9 +31,10 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
   "FlowSource" should {
     /* for every case where you would normally use "in", use 
        "in new AkkaTestkitSpecs2Support" to create a new 'context'. */
-    "create FlowObject and send them to a registered target" in new AkkaTestkitSpecs2Support {
+    "send FlowObjects to the registered target in expected intervals" in new AkkaTestkitSpecs2Support {
       within(2.1 second) {
-        val source = system.actorOf(FlowSource.props(self), "flowSource")
+        val source = system.actorOf(FlowSource.props(), "flowSource")
+        source ! SetTarget(self)
         expectMsgType[Sentiment]
         val a = TestProbe()
         source ! SetTarget(a.ref)
@@ -44,7 +45,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
   }
 
   "FlowConnection" should {
-    "forward and send throughput updates" in new AkkaTestkitSpecs2Support {
+    "forward FlowObjects and send throughput updates" in new AkkaTestkitSpecs2Support {
       within(1.1 second) {
         val p = TestProbe()
         val c = system.actorOf(FlowConnection.props(p.ref), "flowConnection")
@@ -66,7 +67,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
   }
 
   "FlowCrossbar" should {
-    "forward and replicate" in new AkkaTestkitSpecs2Support {
+    "forward and replicate received FlowObjects" in new AkkaTestkitSpecs2Support {
       within(1 second) {
         val c = system.actorOf(FlowCrossbar.props(), "FlowCrossbar")
         val a = TestProbe()
@@ -87,6 +88,80 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         a.expectMsgType[Sentiment].sentiment must be equalTo(3.4)
         a.expectNoMsg(0 seconds)
         b.expectNoMsg(0 seconds)
+      }
+    }
+  }
+
+  "FlowTokenizer" should {
+
+    case class TestMessage(override val uid: Long = NextFlowUID(), override val originUid: Long = NextFlowUID(), a: String = "a field", b: String = "b field") extends FlowObject {
+      override def content(field: String): Option[Any] = field match {
+        case "default" | "a" => Some(a)
+        case "b" => Some(b)
+        case _ => None
+      }
+
+      override def fields(): List[String] = List("default", "a", "b")
+    }
+
+    "tokenize incoming strings" in new AkkaTestkitSpecs2Support {
+      within(1 second) {
+        val tok = system.actorOf(FlowTokenizer.props(), "FlowTokenizer")
+
+        tok ! TestMessage(a = "should be dropped")
+        tok ! SetTarget(self)
+        val M = TestMessage(a = "should tokenize this")
+        tok ! M
+
+        // Make sure we receive all word messages with valid origin and a seperate uid
+        M.a.split(" ") foreach { (Word: String) => {
+          expectMsgType[WordObject] match {
+            case WordObject(uid, M.uid, Word) if uid != M.uid => // ok
+            case o => failure(s"Expected $Word for $M, got $o")
+          }
+        }
+        }
+
+        // Test FOV targeting
+        tok ! SetFieldOfInterest("b")
+
+        val N = TestMessage(a = "not this", b = "but this")
+        tok ! N
+
+        N.b.split(" ") foreach { (Word: String) => {
+          expectMsgType[WordObject] match {
+            case WordObject(uid, N.uid, Word) if uid != N.uid => // ok
+            case o => failure(s"Expected '$Word' for $N, got $o")
+          }
+        }
+        }
+
+        expectNoMsg(0 seconds)
+      }
+    }
+
+    "accept arbitrary regex splitter" in new AkkaTestkitSpecs2Support {
+      within(1 second) {
+        val tok = system.actorOf(FlowTokenizer.props(), "FlowTokenizer")
+        tok ! SetTarget(self)
+
+        tok ! SetSeparator("s")
+        tok ! TestMessage(a = "asbsc")
+        expectMsgType[WordObject].word must beEqualTo("a")
+        expectMsgType[WordObject].word must beEqualTo("b")
+        expectMsgType[WordObject].word must beEqualTo("c")
+
+        tok ! GetSeparator
+        expectMsgType[Separator].separator must beEqualTo("s")
+
+        tok ! SetSeparator("(s|b)")
+        tok ! TestMessage(a = "dsebf")
+        expectMsgType[WordObject].word must beEqualTo("d")
+        expectMsgType[WordObject].word must beEqualTo("e")
+        expectMsgType[WordObject].word must beEqualTo("f")
+
+        tok ! GetSeparator
+        expectMsgType[Separator].separator must beEqualTo("(s|b)")
       }
     }
   }
