@@ -1,0 +1,49 @@
+@()(implicit request: RequestHeader)
+
+@main("RSP - Flow") {
+    <style>
+    #flowchartWindow1 { top:34em;left:50em;}
+    #flowchartWindow2 { top:7em; left:70em;}
+    #flowchartWindow3 { top:27em;left:80em; }
+    #flowchartWindow4 { top:23em; left:42em;}
+    </style>
+    <div class="container-fluid">
+    <div class="span2 btn-group btn-group-vertical" data-toggle="buttons">
+        <div class="btn-group" data-toggle="buttons">
+            <label class="btn btn-default active">
+                <input type="radio" name="options" id="move_mode"><span class="glyphicon glyphicon-move pull-left"></span> Move
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="add_mode"><span class="glyphicon glyphicon-plus pull-left"></span> Add
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="remove_mode"><span class="glyphicon glyphicon-minus pull-left"></span> Remove
+            </label>
+        </div>
+        &nbsp;
+        <div class="btn-group" data-toggle="buttons">
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="add_twitter_source"><span class="glyphicon glyphicon-cloud pull-left"></span> Twitter
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="add_filter"><span class="glyphicon glyphicon-filter pull-left"></span> Filter
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="add_frequency_counter"><span class="glyphicon glyphicon-stats pull-left"></span> Freq. Cnt.
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="add_tokenizer">Tokenizer
+            </label>
+            <label class="btn btn-default">
+                <input type="radio" name="options" id="option3">...
+            </label>
+        </div>
+    </div>
+        <div class="span10 demo flowchart-demo" id="flowchart-demo">
+            <div class="window" id="flowchartWindow1"><strong>1</strong><br/><br/></div>
+            <div class="window" id="flowchartWindow2"><strong>2</strong><br/><br/></div>
+            <div class="window" id="flowchartWindow3"><strong>3</strong><br/><br/></div>
+            <div class="window" id="flowchartWindow4"><strong>4</strong><br/><br/></div>
+        </div>
+    </div>
+}

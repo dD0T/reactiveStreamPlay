@@ -1,0 +1,25 @@
+@()(implicit request: RequestHeader)
+
+@main("RSP - Overview") {
+
+    <div class="jumbotron">
+        <h1>Hi there</h1>
+        <p>This is the overview page for the Reactive Stream Play (RSP) playground.
+            This project explores various different ways of using reactive programming techniques in Scala.
+        </p>
+    </div>
+
+    <p>The application takes in messages from a streaming source like twitter and passes them into a
+        user configurable transformation pipeline. The messages can be filtered and transformed in a number
+        of ways. Configuration as well as the display of the result happens interactively through this
+        website.</p>
+
+
+    <p>Techniques used are:
+        <ul>
+            <li>Akka actors</li>
+            <li>Play iterators</li>
+            <li>Scala-RX observers (FRP)</li>
+        </ul>
+    </p>
+}

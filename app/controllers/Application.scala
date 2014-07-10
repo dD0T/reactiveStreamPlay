@@ -5,8 +5,12 @@ import play.api.mvc._
 
 object Application extends Controller {
 
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+  def overview = Action {
+    implicit request => Ok(views.html.overview())
+  }
+
+  def flow = Action {
+    implicit request => Ok(views.html.flow())
   }
 
 }
