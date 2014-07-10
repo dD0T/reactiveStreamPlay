@@ -1,3 +1,4 @@
+import akka.util.Timeout
 import backend.NextFlowUID
 import backend.flowNetwork._
 import backend.flowNetwork.SetTarget
@@ -9,7 +10,9 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.time.NoTimeConversions
 
 import akka.actor._
+import akka.pattern.ask
 import akka.testkit._
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 // Base structure taken from http://blog.xebia.com/2012/10/01/testing-akka-with-specs2/
@@ -48,7 +51,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
     "forward FlowObjects and send throughput updates" in new AkkaTestkitSpecs2Support {
       within(1.1 second) {
         val p = TestProbe()
-        val c = system.actorOf(FlowConnection.props(p.ref), "flowConnection")
+        val c = system.actorOf(FlowConnection.props(self, p.ref), "flowConnection")
         system.eventStream.subscribe(self, classOf[ThroughputUpdate])
 
         c ! "lulu"
@@ -162,6 +165,31 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
 
         tok ! GetSeparator
         expectMsgType[Separator].separator must beEqualTo("(s|b)")
+      }
+    }
+  }
+
+  "FlowSupervisor" should {
+    "be able to create all simple flow types it supports" in new AkkaTestkitSpecs2Support {
+      within(1 second) {
+        val sup = system.actorOf(FlowSupervisor.props(), "FlowTokenizer")
+        sup ! GetFlowObjectTypes
+        expectMsgType[List[String]] foreach { name =>
+          sup ! CreateFlowObject(name)
+          expectMsgType[ActorRef]
+        }
+      }
+    }
+
+    "correctly name objects" in new AkkaTestkitSpecs2Support {
+      within(1 second) {
+        val sup = system.actorOf(FlowSupervisor.props(), "FlowSupervisor")
+        sup ! CreateFlowObject("FlowSource")
+        expectMsgType[ActorRef].path.name must beEqualTo("FlowSource1")
+        sup ! CreateFlowObject("FlowTokenizer")
+        expectMsgType[ActorRef].path.name must beEqualTo("FlowTokenizer1")
+        sup ! CreateFlowObject("FlowSource")
+        expectMsgType[ActorRef].path.name must beEqualTo("FlowSource2")
       }
     }
   }

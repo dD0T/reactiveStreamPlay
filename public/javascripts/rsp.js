@@ -109,7 +109,10 @@ jsPlumb.ready(function() {
         });
 
         // make all the window divs draggable
-        instance.draggable(jsPlumb.getSelector(".flowchart-demo .window"), { grid: [20, 20] });
+        instance.draggable(jsPlumb.getSelector(".flowchart-demo .window"), {
+            grid: [20, 20],
+            containment:"parent"
+        });
         // THIS DEMO ONLY USES getSelector FOR CONVENIENCE. Use your library's appropriate selector
         // method, or document.querySelectorAll:
         //jsPlumb.draggable(document.querySelectorAll(".window"), { grid: [20, 20] });

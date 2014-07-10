@@ -104,19 +104,6 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
   border:1px solid white;
 }
 
-#flowcontainer {
-    margin-top: 106px;
-    font-size: 80%;
-    width: 80%;
-    margin-left:auto;
-    margin-right: auto;
-    height: 600px;
-    text-align: center;
-    position: relative;
-    max-width: 1200px;
-    max-height: 1000px;
-}
-
 .flowchart-demo .window { border:1px solid #346789;
     box-shadow: 2px 2px 19px #aaa;
     -o-box-shadow: 2px 2px 19px #aaa;
@@ -133,6 +120,21 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     color:black;
     font-family:helvetica;padding:0.5em;
     font-size:0.9em;
+}
+
+.content {
+    background-color: blue;
+    overflow: scroll;
+    width: 100px;
+    height: 100px;
+}
+
+.flowchart-demo {
+    background-color: red;
+    position: relative;
+    height:10000px;
+    width: 10000px;
+    overflow: scroll;
 }
 
 .flowchart-demo .window:hover {

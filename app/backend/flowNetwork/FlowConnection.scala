@@ -8,10 +8,10 @@ import scala.concurrent.duration._
 case class ThroughputUpdate(val messagesPerSecond: Long)
 
 object FlowConnection {
-  def props(target: ActorRef): Props = Props(new FlowConnection(target))
+  def props(source: ActorRef, target: ActorRef): Props = Props(new FlowConnection(source, target))
 }
 
-class FlowConnection(val target: ActorRef) extends Actor {
+class FlowConnection(val source: ActorRef, val target: ActorRef) extends Actor {
   import context.dispatcher
 
   private case object Tick
@@ -23,8 +23,8 @@ class FlowConnection(val target: ActorRef) extends Actor {
   override def postStop() = tick.cancel()
 
   def receive = {
-    case o: FlowObject =>
-      log.debug(s"Forwarding $o to $target")
+    case o: FlowObject if sender() == source =>
+      log.debug(s"Forwarding $o from $source to $target")
       messages += 1
       target ! o
 

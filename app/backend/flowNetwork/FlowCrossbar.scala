@@ -5,11 +5,8 @@ import akka.event.Logging
 import backend.flowTypes.FlowObject
 
 case class MembershipUpdate(targets: Set[ActorRef])
-case class AddTarget(target: ActorRef)
-case class RemoveTarget(target: ActorRef)
 
-case object GetTargets
-case class Targets(targets: Set[ActorRef])
+
 
 object FlowCrossbar {
   def props(): Props = Props(new FlowCrossbar)
@@ -20,9 +17,6 @@ class FlowCrossbar extends Actor {
   val log = Logging(context.system, this)
 
   def receive = {
-    case GetTargets =>
-      sender() ! Targets(targets)
-
     case o: FlowObject =>
       log.debug(s"Repeating $o to ${targets.size} targets")
       targets.map(_ ! o)

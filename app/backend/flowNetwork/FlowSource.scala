@@ -25,7 +25,7 @@ class FlowSource extends TargetableFlow {
   }
   override def active = {
     case Tick =>
-      target ! Sentiment(uid, 0, Random.nextDouble)
+      target ! Sentiment(uid, 0, Random.nextDouble, Random.nextDouble)
       uid += 1
   }
 }

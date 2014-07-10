@@ -31,6 +31,8 @@ trait FlowObject {
     case _ => None
   }
 
+  override def toString(): String = s"${this.getClass.getSimpleName}: default=${content()}}"
+
   /** List of fields available from content functions */
   def fields(): List[String]
 }
