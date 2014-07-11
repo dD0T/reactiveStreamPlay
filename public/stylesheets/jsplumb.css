@@ -122,19 +122,18 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     font-size:0.9em;
 }
 
-.content {
-    background-color: blue;
-    overflow: scroll;
-    width: 100px;
-    height: 100px;
+
+#content {
+    overflow: auto;
+    padding: 0px;
+    margin: 0px;
+    height: 80vh;
 }
 
 .flowchart-demo {
-    background-color: red;
     position: relative;
     height:10000px;
     width: 10000px;
-    overflow: scroll;
 }
 
 .flowchart-demo .window:hover {
