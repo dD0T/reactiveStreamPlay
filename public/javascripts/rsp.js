@@ -1,5 +1,11 @@
 jsPlumb.ready(function() {
 
+    var feed = new EventSource("/events")
+
+    feed.onmessage = function(e) {
+        console.log(JSON.parse(e.data))
+    }
+
     var instance = jsPlumb.getInstance({
         // default drag options
         DragOptions : { cursor: 'pointer', zIndex:2000 },
