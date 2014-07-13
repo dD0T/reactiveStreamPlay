@@ -91,18 +91,18 @@ class MessageSpec extends Specification {
   }
 
   "Sentiment" should {
-    val msg = Sentiment(0, 1, 32.3)
+    val msg = Sentiment(0, 1, 5,4)
 
     "have 'sentiment' default field" in {
       msg.fields() must contain("sentiment")
       msg.content() must beEqualTo(msg.content("sentiment"))
-      msg.contentAsDouble() must beSome(32.3)
+      msg.contentAsDouble() must beSome(1)
 
     }
 
     "have predecessor" in {
       msg.originUid must beEqualTo(1)
-      Sentiment(10, msg, 23).originUid must beEqualTo(msg.uid)
+      Sentiment(10, msg, 23, 22).originUid must beEqualTo(msg.uid)
     }
   }
 }

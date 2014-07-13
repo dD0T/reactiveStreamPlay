@@ -58,11 +58,11 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         c ! TwitterMessage(0, "foo")
         c ! TwitterMessage(1, "bar")
         c ! "lulu"
-        c ! Sentiment(2, 0, 3.4)
+        c ! Sentiment(2, 0, 4.5, 5.4)
 
         p.expectMsgType[TwitterMessage].message must be equalTo ("foo")
         p.expectMsgType[TwitterMessage].message must be equalTo ("bar")
-        p.expectMsgType[Sentiment].sentiment must be equalTo (3.4)
+        p.expectMsgType[Sentiment].positiveScore must be equalTo (4.5)
 
         expectMsgType[ThroughputUpdate] must be equalTo (ThroughputUpdate(3))
       }
@@ -82,13 +82,13 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         c ! TwitterMessage(0, "foo")
 
         c ! RemoveTarget(b.ref)
-        c ! Sentiment(2, 0, 3.4)
+        c ! Sentiment(2, 0, 4.5, 5.4)
         c ! "lulu"
 
         a.expectMsgType[TwitterMessage].message must be equalTo("foo")
         b.expectMsgType[TwitterMessage].message must be equalTo("foo")
 
-        a.expectMsgType[Sentiment].sentiment must be equalTo(3.4)
+        a.expectMsgType[Sentiment].positiveScore must be equalTo (4.5)
         a.expectNoMsg(0 seconds)
         b.expectNoMsg(0 seconds)
       }
