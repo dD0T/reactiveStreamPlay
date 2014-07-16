@@ -1,24 +1,15 @@
 package backend.flowNetwork
 
-import akka.actor.{ActorLogging, Actor}
-
-case class SetFieldOfInterest(fieldOfInterest: String)
-case class FieldOfInterest(fieldOfInterest: String)
-case object GetFieldOfInterest
-
-trait FlowFieldOfInterest extends Actor with ActorLogging {
+trait FlowFieldOfInterest extends FlowNode {
   var fieldOfInterest: String = "default"
 
-  def handleSetFieldOfInterest: Receive = {
-    case SetFieldOfInterest(foi) =>
+  addConfigSetters({
+    case ("fieldOfInterest", foi) =>
       log.info(s"Updating FOI to $foi")
       fieldOfInterest = foi
-  }
+  })
 
-  def handleGetFieldOfInterest: Receive = {
-    case GetFieldOfInterest =>
-      sender() ! FieldOfInterest(fieldOfInterest)
-  }
-
-  def handleFieldOfInterest: Receive = handleGetFieldOfInterest orElse handleSetFieldOfInterest
+  addConfigMapGetters(() => Map(
+    "fieldOfInterest" -> fieldOfInterest
+  ))
 }

@@ -29,7 +29,7 @@ class FlowConnection(val source: ActorRef, val target: ActorRef) extends Actor {
       target ! o
 
     case Tick =>
-      context.system.eventStream.publish(ThroughputUpdate(messages))
+      context.parent ! ThroughputUpdate(messages)
       messages = 0
   }
 }

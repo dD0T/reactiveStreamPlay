@@ -1,10 +1,11 @@
 package backend.flowNetwork
 
 import akka.actor._
+import backend.NextFlowUID
 
 
 case object GetFlowObjectTypes
-case class CreateFlowObject(what: String)
+case class CreateFlowObject(what: String, x: Int, y: Int)
 
 case object GetConnections
 case class Connect(source: ActorRef, target: ActorRef)
@@ -19,13 +20,13 @@ class FlowSupervisor extends Actor with ActorLogging {
   import akka.actor.SupervisorStrategy._
   import scala.concurrent.duration._
 
-  val ordinaryFlowObjects = Map[String, ()=>Props](
-    "FlowSource" -> (()=>FlowSource.props),
-    "FlowCrossbar" -> (()=>FlowCrossbar.props),
-    "FlowTokenizer" -> (()=>FlowTokenizer.props),
-    "FlowFrequency" -> (()=>FlowFrequency.props),
-    "FlowSentiment" -> (()=>FlowSentiment.props),
-    "FlowAccumulator" -> (()=>FlowAccumulator.props)
+  val ordinaryFlowObjects = Map[String, (Long, String, Int, Int) => Props](
+    "FlowSource" -> FlowSource.props,
+    "FlowCrossbar" -> FlowCrossbar.props,
+    "FlowTokenizer" -> FlowTokenizer.props,
+    "FlowFrequency" -> FlowFrequency.props,
+    "FlowSentiment" -> FlowSentiment.props,
+    "FlowAccumulator" -> FlowAccumulator.props
   )
 
   object newActorName {
@@ -42,9 +43,10 @@ class FlowSupervisor extends Actor with ActorLogging {
   def receive = {
     case GetFlowObjectTypes => sender() ! ordinaryFlowObjects.keys.toList
 
-    case CreateFlowObject(objectType) if ordinaryFlowObjects contains objectType =>
+    case CreateFlowObject(objectType, x, y) if ordinaryFlowObjects contains objectType =>
       log.info(s"Creating new $objectType for ${sender()}")
-      val obj = context.actorOf(ordinaryFlowObjects(objectType)(), name = newActorName(objectType))
+      val name = newActorName(objectType)
+      val obj = context.actorOf(ordinaryFlowObjects(objectType)(NextFlowUID(), name, x, y), name = name)
       flowObjects += obj
       sender() ! obj
 

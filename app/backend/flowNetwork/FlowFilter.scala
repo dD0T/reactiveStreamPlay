@@ -9,23 +9,27 @@ case object GetFilter
 case object GetDropped
 
 object FlowFilter {
-  def prop(): Props = Props(new FlowFilter)
+  def prop(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFilter(id, name, x, y))
 }
 
-class FlowFilter extends TargetableFlow with FlowFieldOfInterest {
+class FlowFilter(id: Long, name: String,  x: Int, y: Int)
+  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+
   var filter: String = ""
   var dropped: Int = 0
 
-  def common: Receive = handleFieldOfInterest orElse {
-    case SetFilter(f) =>
-      log.info(s"Updating filter to '$f' for ${sender()}")
+  addConfigSetters({
+    case ("filter", f) =>
+      log.info(s"Updating filter to '$f'")
       filter = f
-    case GetFilter => sender() ! filter
-    case GetDropped => sender() ! dropped
-  }
+  })
 
-  override def passive: Receive = common
-  override def active: Receive = common orElse {
+  addConfigMapGetters(() => Map(
+    "filter" -> filter,
+    "[dropped]" -> dropped.toString() //TODO: Not pushed to client when changed. Add a "watchedfields" trait or sth.
+  ))
+
+  override def active: Receive = {
     case o: FlowObject =>
       o.contentAsString(fieldOfInterest) match {
         case Some(value) =>

@@ -7,10 +7,12 @@ import backend.flowTypes.Sentiment
 import scala.concurrent.duration._
 
 object FlowSource {
-  def props(): Props = Props(new FlowSource)
+  def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSource(id, name, x, y))
 }
 
-class FlowSource extends TargetableFlow {
+class FlowSource(id: Long, name: String,  x: Int, y: Int)
+  extends FlowNode(id, name, x, y) with TargetableFlow {
+
   import context.dispatcher
 
   private case object Tick

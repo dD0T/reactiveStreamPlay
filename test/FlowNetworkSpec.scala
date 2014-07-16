@@ -31,12 +31,51 @@ abstract class AkkaTestkitSpecs2Support extends TestKit(ActorSystem())
 class FlowNetworkSpec extends Specification with NoTimeConversions {
   sequential // forces all tests to be run sequentially
 
+  "FlowNode" should {
+    "should offer gettable and settable properties" in new AkkaTestkitSpecs2Support {
+      within(2 seconds) {
+        val parent = system.actorOf(Props(new Actor {
+          // Special construct for testing context.parent messages
+          val child = context.actorOf(FlowNode.props(0, "node", 100, 120), "flowNode")
+          def receive = {
+            case x if sender == child => testActor forward x
+            case x => child forward x
+          }
+        }))
+
+        val p = TestProbe()
+
+        p.send(parent, GetConfiguration)
+        var cfg = p.expectMsgType[Configuration].config
+        cfg("id") must be equalTo("0")
+        cfg("name") must be equalTo("node")
+        cfg("x") must be equalTo("100")
+        cfg("y") must be equalTo("120")
+
+        p.send(parent, Configuration(Map(
+          "name" -> "bernd",
+          "x" -> "321",
+          "y" -> "123",
+          "id" -> "can't set this",
+          "nonexistant" -> "thingy"
+        )))
+
+        // Should post update to parent
+        cfg = expectMsgType[Configuration].config
+        cfg("id") must be equalTo("0")
+        cfg("name") must be equalTo("bernd")
+        cfg("x") must be equalTo("321")
+        cfg("y") must be equalTo("123")
+      }
+    }
+  }
+
   "FlowSource" should {
     /* for every case where you would normally use "in", use 
        "in new AkkaTestkitSpecs2Support" to create a new 'context'. */
     "send FlowObjects to the registered target in expected intervals" in new AkkaTestkitSpecs2Support {
       within(2.1 second) {
-        val source = system.actorOf(FlowSource.props(), "flowSource")
+        val source = system.actorOf(FlowSource.props(0, "source", 100, 122), "flowSource")
         source ! SetTarget(self)
         expectMsgType[Sentiment]
         val a = TestProbe()
@@ -51,8 +90,14 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
     "forward FlowObjects and send throughput updates" in new AkkaTestkitSpecs2Support {
       within(1.1 second) {
         val p = TestProbe()
-        val c = system.actorOf(FlowConnection.props(self, p.ref), "flowConnection")
-        system.eventStream.subscribe(self, classOf[ThroughputUpdate])
+        val c = system.actorOf(Props(new Actor {
+          // Special construct for testing context.parent messages
+          val child = context.actorOf(FlowConnection.props(testActor, p.ref), "flowConnection")
+          def receive = {
+            case x if sender == child => testActor forward x
+            case x => child forward x
+          }
+        }))
 
         c ! "lulu"
         c ! TwitterMessage(0, "foo")
@@ -72,7 +117,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
   "FlowCrossbar" should {
     "forward and replicate received FlowObjects" in new AkkaTestkitSpecs2Support {
       within(1 second) {
-        val c = system.actorOf(FlowCrossbar.props(), "FlowCrossbar")
+        val c = system.actorOf(FlowCrossbar.props(0, "cross", 1, 2), "FlowCrossbar")
         val a = TestProbe()
         val b = TestProbe()
         c ! AddTarget(a.ref)
@@ -108,8 +153,8 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
     }
 
     "tokenize incoming strings" in new AkkaTestkitSpecs2Support {
-      within(1 second) {
-        val tok = system.actorOf(FlowTokenizer.props(), "FlowTokenizer")
+      within(1.5 second) {
+        val tok = system.actorOf(FlowTokenizer.props(0, "tok", 3, 4), "FlowTokenizer")
 
         tok ! TestMessage(a = "should be dropped")
         tok ! SetTarget(self)
@@ -126,7 +171,9 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         }
 
         // Test FOV targeting
-        tok ! SetFieldOfInterest("b")
+        tok ! Configuration(Map(
+          "fieldOfInterest" -> "b")
+        )
 
         val N = TestMessage(a = "not this", b = "but this")
         tok ! N
@@ -145,26 +192,35 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
 
     "accept arbitrary regex splitter" in new AkkaTestkitSpecs2Support {
       within(1 second) {
-        val tok = system.actorOf(FlowTokenizer.props(), "FlowTokenizer")
-        tok ! SetTarget(self)
+        val tok = system.actorOf(Props(new Actor {
+          // Special construct for testing context.parent messages
+          val child = context.actorOf(FlowTokenizer.props(0, "tok", 1, 4), "FlowTokenizer")
+          def receive = {
+            case x if sender == child => testActor forward x
+            case x => child forward x
+          }
+        }))
 
-        tok ! SetSeparator("s")
+        tok ! SetTarget(self)
+        expectMsgType[Configuration].config("separator") must beEqualTo(" ")
+
+        tok ! Configuration(Map("separator" -> "s"))
+        expectMsgType[Configuration].config("separator") must beEqualTo("s")
+
         tok ! TestMessage(a = "asbsc")
         expectMsgType[WordObject].word must beEqualTo("a")
         expectMsgType[WordObject].word must beEqualTo("b")
         expectMsgType[WordObject].word must beEqualTo("c")
 
-        tok ! GetSeparator
-        expectMsgType[Separator].separator must beEqualTo("s")
+        tok ! Configuration(Map("separator" -> "(s|b)"))
+        expectMsgType[Configuration].config("separator") must beEqualTo("(s|b)")
 
-        tok ! SetSeparator("(s|b)")
         tok ! TestMessage(a = "dsebf")
         expectMsgType[WordObject].word must beEqualTo("d")
         expectMsgType[WordObject].word must beEqualTo("e")
         expectMsgType[WordObject].word must beEqualTo("f")
 
-        tok ! GetSeparator
-        expectMsgType[Separator].separator must beEqualTo("(s|b)")
+
       }
     }
   }
@@ -175,7 +231,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         val sup = system.actorOf(FlowSupervisor.props(), "FlowTokenizer")
         sup ! GetFlowObjectTypes
         expectMsgType[List[String]] foreach { name =>
-          sup ! CreateFlowObject(name)
+          sup ! CreateFlowObject(name, 100, 200)
           expectMsgType[ActorRef]
         }
       }
@@ -184,11 +240,11 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
     "correctly name objects" in new AkkaTestkitSpecs2Support {
       within(1 second) {
         val sup = system.actorOf(FlowSupervisor.props(), "FlowSupervisor")
-        sup ! CreateFlowObject("FlowSource")
+        sup ! CreateFlowObject("FlowSource", 1, 2)
         expectMsgType[ActorRef].path.name must beEqualTo("FlowSource1")
-        sup ! CreateFlowObject("FlowTokenizer")
+        sup ! CreateFlowObject("FlowTokenizer", 3, 4)
         expectMsgType[ActorRef].path.name must beEqualTo("FlowTokenizer1")
-        sup ! CreateFlowObject("FlowSource")
+        sup ! CreateFlowObject("FlowSource", 5, 6)
         expectMsgType[ActorRef].path.name must beEqualTo("FlowSource2")
       }
     }

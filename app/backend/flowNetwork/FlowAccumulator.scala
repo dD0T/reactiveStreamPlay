@@ -5,16 +5,17 @@ import backend.NextFlowUID
 import backend.flowTypes.{NumberObject, FlowObject}
 
 object FlowAccumulator {
-  def props(): Props = Props(new FlowAccumulator)
+  def props(id: Long, name: String,  x: Int, y: Int): Props =
+    Props(new FlowAccumulator(id, name, x, y))
 }
 
-class FlowAccumulator extends TargetableFlow with FlowFieldOfInterest {
+class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
+  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+
   var accumulator: Double = 0.0
 
-  def common: Receive = handleFieldOfInterest
-
-  override def passive: Receive = common
-  override def active: Receive = common orElse {
+  //TODO: Think about exposing this over the property interface in a sane way
+  override def active: Receive = {
     case o: FlowObject =>
       o.contentAsDouble(fieldOfInterest) match {
         case Some(value) =>

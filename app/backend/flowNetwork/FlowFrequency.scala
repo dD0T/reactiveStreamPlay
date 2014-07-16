@@ -6,7 +6,7 @@ import backend.flowTypes.FlowObject
 import scala.util.Sorting
 
 object FlowFrequency {
-  def props(): Props = Props(new FlowFrequency)
+  def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFrequency(id, name, x, y))
 }
 
 
@@ -25,7 +25,9 @@ object FlowFrequencyUpdate {
 
 
 
-class FlowFrequency extends TargetableFlow with FlowFieldOfInterest {
+class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
+  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+
   var frequencies = scala.collection.mutable.HashMap[Any, Int]() withDefaultValue 0
 
   var toplist = scala.collection.mutable.Buffer[(Any, Int)]()
@@ -33,10 +35,7 @@ class FlowFrequency extends TargetableFlow with FlowFieldOfInterest {
 
   var total = 0
 
-  def common: Receive = handleFieldOfInterest
-
-  override def passive: Receive = common
-  override def active: Receive = common orElse {
+  override def active: Receive = {
     case o: FlowObject =>
       o.content(fieldOfInterest) match {
         case Some(thing) => {
