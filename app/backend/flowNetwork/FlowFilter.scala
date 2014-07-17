@@ -9,7 +9,7 @@ case object GetFilter
 case object GetDropped
 
 object FlowFilter {
-  def prop(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFilter(id, name, x, y))
+  def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFilter(id, name, x, y))
 }
 
 class FlowFilter(id: Long, name: String,  x: Int, y: Int)

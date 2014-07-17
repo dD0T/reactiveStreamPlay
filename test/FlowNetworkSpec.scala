@@ -232,7 +232,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         sup ! GetFlowObjectTypes
         expectMsgType[List[String]] foreach { name =>
           sup ! CreateFlowObject(name, 100, 200)
-          expectMsgType[ActorRef]
+          expectMsgType[(Long, ActorRef)]
         }
       }
     }
@@ -241,11 +241,64 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
       within(1 second) {
         val sup = system.actorOf(FlowSupervisor.props(), "FlowSupervisor")
         sup ! CreateFlowObject("FlowSource", 1, 2)
-        expectMsgType[ActorRef].path.name must beEqualTo("FlowSource1")
+        expectMsgType[(Long, ActorRef)]._2.path.name must beEqualTo("FlowSource1")
         sup ! CreateFlowObject("FlowTokenizer", 3, 4)
-        expectMsgType[ActorRef].path.name must beEqualTo("FlowTokenizer1")
+        expectMsgType[(Long, ActorRef)]._2.path.name must beEqualTo("FlowTokenizer1")
         sup ! CreateFlowObject("FlowSource", 5, 6)
-        expectMsgType[ActorRef].path.name must beEqualTo("FlowSource2")
+        expectMsgType[(Long, ActorRef)]._2.path.name must beEqualTo("FlowSource2")
+      }
+    }
+
+    "be able to connect a source to a target" in new AkkaTestkitSpecs2Support {
+      within(1 second) {
+        // Setup:  Source --> Accumulator --> Filter
+        // The filter acts as a sink so the Accumulator becomes active
+
+        val sup = system.actorOf(FlowSupervisor.props(), "FlowSupervisor")
+
+        // Register for updates
+        sup ! Register(self)
+
+        // Create flow graph
+        sup ! CreateFlowObject("FlowSource", 1, 2)
+        val (sourceId, source) = expectMsgType[(Long, ActorRef)]
+
+        expectMsgType[(Long, Configuration)] match {
+          case (sourceId, Configuration(cfg)) if cfg("active") == "false" => //ok
+          case f => failure(s"Unexpected: $f")
+        }
+
+        sup ! CreateFlowObject("FlowAccumulator", 3, 4)
+        val (accId, acc) = expectMsgType[(Long, ActorRef)]
+
+        expectMsgType[(Long, Configuration)] match {
+          case (accId, Configuration(cfg)) if cfg("active") == "false" => //ok
+          case f => failure(s"Unexpected: $f")
+        }
+
+        sup ! Connect(sourceId, accId)
+        val ((_,_), c1) = expectMsgType[((Long, Long), ActorRef)]
+
+        expectMsgType[(Long, Configuration)] match {
+          case (sourceId, Configuration(cfg)) if cfg("active") == "true" => //ok
+          case f => failure(s"Unexpected: $f")
+        }
+
+        sup ! CreateFlowObject("FlowFilter", 5, 6)
+        val (filterId, filter) = expectMsgType[(Long, ActorRef)]
+
+        expectMsgType[(Long, Configuration)] match {
+          case (filterId, Configuration(cfg)) if cfg("active") == "false" => //ok
+          case f => failure(s"Unexpected: $f")
+        }
+
+        sup ! Connect(accId, filterId)
+        val ((_,_), c2) = expectMsgType[((Long, Long), ActorRef)]
+
+        expectMsgType[(Long, Configuration)] match {
+          case (accId, Configuration(cfg)) if cfg("active") == "true" => //ok
+          case f => failure(s"Unexpected: $f")
+        }
       }
     }
   }
