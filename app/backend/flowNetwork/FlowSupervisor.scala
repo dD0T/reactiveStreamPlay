@@ -1,6 +1,8 @@
 package backend.flowNetwork
 
 import akka.actor._
+import play.api.libs.json.JsValue
+import play.api.libs.iteratee.Concurrent.Channel
 import backend.NextFlowUID
 
 case class Register(observer: ActorRef)
@@ -16,6 +18,8 @@ case class CreateFlowObject(what: String, x: Int, y: Int)
 case object GetConnections
 case class Connect(source: Long, target: Long)
 case class Disconnect(source: Long, target: Long)
+
+case class EventChannel(chan: Channel[JsValue])
 
 object FlowSupervisor {
   def props(): Props = Props(new FlowSupervisor)
@@ -51,6 +55,11 @@ class FlowSupervisor extends Actor with ActorLogging {
 
   def receive = {
     case GetFlowObjectTypes => sender() ! ordinaryFlowObjects.keys.toList
+
+    case EventChannel(channel: Channel[JsValue]) =>
+      log.info("Starting event channel translator")
+      val translator = context.actorOf(MessageTranslator.props(channel), name = "messageTranslator")
+      self ! Register(translator)
 
     case Register(observer) =>
       log.info(s"${observer} registered for updates")

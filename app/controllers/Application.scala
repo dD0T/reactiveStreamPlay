@@ -1,14 +1,17 @@
 package controllers
 
+import backend.flowNetwork.{CreateFlowObject, FlowSupervisor, EventChannel}
 import play.api._
 import play.api.mvc._
 import libs.EventSource
 import play.api.libs.iteratee.Concurrent
-import libs.json.{Json, JsValue}
+import libs.json.JsValue
+import play.libs.Akka
 
 object Application extends Controller {
-
+  val sup = Akka.system.actorOf(FlowSupervisor.props(), name = "flowSupervisor")
   val (eventEnumerator, eventChannel) = Concurrent.broadcast[JsValue]
+  sup ! EventChannel(eventChannel)
 
   def overview = Action {
     implicit request => Ok(views.html.overview())
@@ -25,7 +28,8 @@ object Application extends Controller {
   }
 
   def reset = Action {
-    eventChannel.push(Json.obj("foo" -> 1))
+    sup ! CreateFlowObject("FlowSource", 10, 10)
+    sup ! CreateFlowObject("FlowAccumulator", 100, 100)
     Ok("reset")
   }
 }
