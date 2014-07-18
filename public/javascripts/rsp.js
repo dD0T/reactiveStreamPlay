@@ -80,27 +80,80 @@ $(function() {
             });
         };
 
+    var contentPosFromEvent = function(evt) {
+        // Calculate the click position relative to content which is our scrollable area
+        var content = $('#content');
+        return {
+            x: evt.pageX + content.scrollLeft() - content.offset().left,
+            y: evt.pageY + content.scrollTop() - content.offset().top
+        }
+    };
+
     $("#flowchart-demo").click(function (evt) {
         var mode = $("input[name=mode]:checked").val();
         if (mode != "add") return;
 
         var nodetype = $("input[name=nodetype]:checked").val();
 
-        // Calculate the click position relative to content which is our scrollable area
-        var content = $('#content')
-        var x = evt.pageX + content.scrollLeft() - content.offset().left
-        var y = evt.pageY + content.scrollTop() - content.offset().top
+        pos = contentPosFromEvent(evt)
 
-        console.log("Trying to create " + nodetype + " node at (" + x + "," + y + ")");
+        console.log("Trying to create " + nodetype + " node at (" + pos.x + "," + pos.y + ")");
         $.ajax({url: "/add",
             data: {
                 "nodetype": nodetype,
-                "x": x,
-                "y": y
+                "x": pos.x,
+                "y": pos.y
             }
-
         })
-    })
+    });
+
+    /**
+     * Blocking function for connecting two nodes
+     * @param sourceId Source node
+     * @param targetId Target node
+     * @returns True if server reported connection as established, false otherwise.
+     */
+    var connect = function(sourceId, targetId) {
+        console.log("Requesting connection from " + sourceId + " to " + targetId);
+        var result = false ;
+        $.ajax({url: "/connect",
+            data: {
+                "sourceId": sourceId,
+                "targetId": targetId
+            },
+            success: function(html) {
+                result = true;
+            },
+            async: false
+        });
+        return result;
+    };
+
+    var disconnect = function(sourceId, targetId) {
+        console.log("Requesting disconnect of " + sourceId + " from " + targetId);
+        var result = false;
+        $.ajax({url: "/disconnect",
+            data: {
+                "sourceId": sourceId,
+                "targetId": targetId
+            },
+            success: function(html) {
+                result = true;
+            },
+            async: false
+        });
+        return result
+    };
+
+    var pushConfig = function(id, config) {
+
+        $.ajax({url: "/node/" + id,
+                method: "POST",
+                processData: false,
+                data: JSON.stringify(config),
+                contentType: "text/json"
+        })
+    };
 
     var _addEndpoints = function(toId, sourceAnchors, targetAnchors) {
         for (var i = 0; i < sourceAnchors.length; i++) {
@@ -114,18 +167,19 @@ $(function() {
     };
 
     feed.onmessage = function(e) {
-        var cfg = JSON.parse(e.data).config
-        console.log(cfg)
+        var cfg = JSON.parse(e.data).config;
+        console.log(cfg);
         instance.doWhileSuspended(function() {
+            var newNode = false;
             if ($("#"+cfg.id).length == 0) {
-                console.log("Creating new node " + cfg.id)
+                console.log("Creating new node " + cfg.id);
                 // New object
-                $("#flowchart-demo").append('<div class="window" id="' + cfg.id +'"></div>')
+                $("#flowchart-demo").append('<div class="window" id="' + cfg.id +'"></div>');
 
                 // We offer op to three inputs or outputs depending on how many
                 // the node actually has
-                var inputs = ["Left", "TopLeft", "BottomLeft"].slice(0, cfg.inputs)
-                var outputs = ["Right", "BottomRight", "TopRight"].slice(0, cfg.outputs)
+                var inputs = ["Left", "TopLeft", "BottomLeft"].slice(0, cfg.inputs);
+                var outputs = ["Right", "BottomRight", "TopRight"].slice(0, cfg.outputs);
 
                 _addEndpoints(cfg.id, outputs, inputs);
 
@@ -133,22 +187,23 @@ $(function() {
                     grid: [20, 20],
                     containment:"parent"
                 });
+                newNode = true
             }
 
-            var node = $("#"+cfg.id)
+            var node = $("#"+cfg.id);
 
-            var displayString = ""
+            var displayString = "";
             if ("display" in cfg) {
                 var displayFields =cfg.display.split(",").map(function (n) {
                     // Should do the trick most of the time. Obviously some edge cases
                     var value = (cfg[n] == "" || cfg[n] == " " || isNaN(cfg[n]))
                         ? ('"' + cfg[n] + '"')
-                        : cfg[n]
+                        : cfg[n];
 
                     return n + ": " + value
-                })
+                });
                 if (displayFields.length > 0) {
-                    var displayString = '<p>' + displayFields.join('<br />') + '</p>'
+                    displayString = '<p>' + displayFields.join('<br />') + '</p>';
                 }
             }
 
@@ -163,8 +218,21 @@ $(function() {
             node.css("left", cfg.x + "px")
                 .css("top", cfg.y + "px")
                 .html('<strong>' + cfg.name + '</strong>' + displayString)
+
+            if (newNode) {
+                // Attach additional event listeners
+                node.draggable({
+                    stop: function (e) {
+                        pos = node.position()
+                        pushConfig(node.attr('id'), {
+                            x: String(pos.left),
+                            y: String(pos.top)
+                        })
+                    }
+                })
+            }
         })
-    }
+    };
 
     instance.doWhileSuspended(function() {
         // listen for new connections; initialise them the same way we initialise the connections at startup.
@@ -172,31 +240,19 @@ $(function() {
             init(connInfo.connection);
         });
 
-        // THIS DEMO ONLY USES getSelector FOR CONVENIENCE. Use your library's appropriate selector
-        // method, or document.querySelectorAll:
-        //jsPlumb.draggable(document.querySelectorAll(".window"), { grid: [20, 20] });
-
-        //
-
-        //
-        // listen for clicks on connections, and offer to delete connections on click.
-        //
         instance.bind("click", function(conn, originalEvent) {
-            if (confirm("Delete connection from " + conn.sourceId + " to " + conn.targetId + "?"))
-                jsPlumb.detach(conn);
+            disconnect(conn.sourceId, conn.targetId);
+            jsPlumb.detach(conn);
         });
 
-        instance.bind("connectionDrag", function(connection) {
-            console.log("connection " + connection.id + " is being dragged. suspendedElement is ", connection.suspendedElement, " of type ", connection.suspendedElementType);
-        });
+        instance.bind("beforeDrop", function(c) {
+            return connect(c.sourceId, c.targetId);
+        })
 
-        instance.bind("connectionDragStop", function(connection) {
-            console.log("connection " + connection.id + " was dragged");
-        });
+        instance.bind("beforeDetach", function(c) {
+            return disconnect(c.sourceId, c.targetId)
+        })
 
-        instance.bind("connectionMoved", function(params) {
-            console.log("connection " + params.connection.id + " was moved");
-        });
     });
 
     jsPlumb.fire("jsPlumbDemoLoaded", instance);

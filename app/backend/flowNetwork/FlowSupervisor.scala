@@ -138,6 +138,7 @@ class FlowSupervisor extends Actor with ActorLogging {
               log.info(s"Disconnecting $source and $target")
               source ! RemoveTarget(connection)
               connection ! Kill
+              sender() ! (source, target)
             case _ => log.warning(s"Asked to disconnect $source from $target but have no connection")
           }
         }
