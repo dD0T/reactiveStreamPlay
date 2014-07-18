@@ -15,7 +15,7 @@ object FlowFilter {
 class FlowFilter(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
-  var filter: String = ""
+  var filter: String = ".*"
   var dropped: Int = 0
 
   addConfigSetters({
@@ -36,6 +36,7 @@ class FlowFilter(id: Long, name: String,  x: Int, y: Int)
         case Some(value) =>
           if (value matches filter) target ! o
           else dropped += 1
+          configUpdated() //FIXME: This shouldn't trigger on every cycle
         case None => log.debug(s"Message ${o.uid} doesn't have a String convertible field $fieldOfInterest")
       }
   }
