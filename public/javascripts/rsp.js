@@ -187,10 +187,18 @@ $(function() {
                     grid: [20, 20],
                     containment:"parent"
                 });
-                newNode = true
+                newNode = true;
             }
 
             var node = $("#"+cfg.id);
+            if (node.is('.ui-draggable-dragging')) {
+                // Node is currently being dragged. Discard updates.
+                // This is fine as once the drag is done the position update
+                // will cause a state update. This will only leave a small
+                // window for updates to cause a bit of jumping and that should
+                // be it.
+                return;
+            }
 
             var displayString = "";
             if ("display" in cfg) {
@@ -219,13 +227,13 @@ $(function() {
 
             node.css("left", cfg.x + "px")
                 .css("top", cfg.y + "px")
-                .html('<strong>' + cfg.name + '</strong>' + displayString)
+                .html('<strong>' + cfg.name + '</strong>' + displayString);
 
             if (newNode) {
                 // Attach additional event listeners
                 node.draggable({
                     stop: function (e) {
-                        pos = node.position()
+                        pos = node.position();
                         pushConfig(node.attr('id'), {
                             x: String(pos.left),
                             y: String(pos.top)
@@ -249,7 +257,7 @@ $(function() {
 
         instance.bind("beforeDrop", function(c) {
             return connect(c.sourceId, c.targetId);
-        })
+        });
 
         instance.bind("beforeDetach", function(c) {
             return disconnect(c.sourceId, c.targetId)
