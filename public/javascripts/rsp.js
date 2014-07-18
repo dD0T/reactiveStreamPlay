@@ -101,8 +101,8 @@ $(function() {
         $.ajax({url: "/add",
             data: {
                 "nodetype": nodetype,
-                "x": pos.x,
-                "y": pos.y
+                "x": pos.x | 0,
+                "y": pos.y | 0
             }
         })
     });
@@ -197,8 +197,10 @@ $(function() {
                 var displayFields =cfg.display.split(",").map(function (n) {
                     // Should do the trick most of the time. Obviously some edge cases
                     var value = (cfg[n] == "" || cfg[n] == " " || isNaN(cfg[n]))
-                        ? ('"' + cfg[n] + '"')
-                        : cfg[n];
+                        ? ('"' + cfg[n] + '"') // Quote non-numbers
+                        : ((cfg[n] % 1 === 0) // Check if Int
+                                ? cfg[n] // Int
+                                : Number(cfg[n]).toFixed(4)); // Round double
 
                     return n + ": " + value
                 });

@@ -14,6 +14,11 @@ class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
 
   var accumulator: Double = 0.0
 
+  addConfigMapGetters(() => Map(
+    "accumulator" -> accumulator.toString,
+    "display" -> "accumulator"
+  ))
+
   //TODO: Think about exposing this over the property interface in a sane way
   override def active: Receive = {
     case o: FlowObject =>
@@ -21,6 +26,7 @@ class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
         case Some(value) =>
           accumulator += value
           target ! NumberObject(NextFlowUID(), o, accumulator)
+          configUpdated() //FIXME: This shouldn't be updated all the time
         case None => log.debug(s"Message ${o.uid} doesn't have a Double convertible field $fieldOfInterest")
       }
   }
