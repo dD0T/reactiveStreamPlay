@@ -39,7 +39,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     padding:0.5em;
     width:150px;
     height:100px;
-    line-height: 80px;
+
     -webkit-transition: -webkit-box-shadow 0.15s ease-in;
     -moz-transition: -moz-box-shadow 0.15s ease-in;
     -o-transition: -o-box-shadow 0.15s ease-in;
@@ -58,6 +58,18 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 
 .window a {
     font-family:helvetica;
+}
+
+.window p {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 20px;
+    margin-right: 20px;
+    border-radius: 5px;
+    padding: 5px;
+    background-color: rgb(228, 228, 228);
+    overflow-wrap: break-word;
+    text-align: left;
 }
 
 .component { 
@@ -122,6 +134,9 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     font-size:0.9em;
 }
 
+.inactive {
+    background-color: #ff5200 !important;
+}
 
 #content {
     overflow: auto;

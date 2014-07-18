@@ -264,7 +264,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         val (sourceId, source) = expectMsgType[(Long, ActorRef)]
 
         expectMsgType[(Long, Configuration)] match {
-          case (sourceId, Configuration(cfg)) if cfg("active") == "false" => //ok
+          case (sourceId, Configuration(cfg)) if cfg("active") == "0" => //ok
           case f => failure(s"Unexpected: $f")
         }
 
@@ -272,7 +272,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         val (accId, acc) = expectMsgType[(Long, ActorRef)]
 
         expectMsgType[(Long, Configuration)] match {
-          case (accId, Configuration(cfg)) if cfg("active") == "false" => //ok
+          case (accId, Configuration(cfg)) if cfg("active") == "0" => //ok
           case f => failure(s"Unexpected: $f")
         }
 
@@ -280,7 +280,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         val ((_,_), c1) = expectMsgType[((Long, Long), ActorRef)]
 
         expectMsgType[(Long, Configuration)] match {
-          case (sourceId, Configuration(cfg)) if cfg("active") == "true" => //ok
+          case (sourceId, Configuration(cfg)) if cfg("active") == "1" => //ok
           case f => failure(s"Unexpected: $f")
         }
 
@@ -288,7 +288,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         val (filterId, filter) = expectMsgType[(Long, ActorRef)]
 
         expectMsgType[(Long, Configuration)] match {
-          case (filterId, Configuration(cfg)) if cfg("active") == "false" => //ok
+          case (filterId, Configuration(cfg)) if cfg("active") == "0" => //ok
           case f => failure(s"Unexpected: $f")
         }
 
@@ -296,7 +296,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         val ((_,_), c2) = expectMsgType[((Long, Long), ActorRef)]
 
         expectMsgType[(Long, Configuration)] match {
-          case (accId, Configuration(cfg)) if cfg("active") == "true" => //ok
+          case (accId, Configuration(cfg)) if cfg("active") == "1" => //ok
           case f => failure(s"Unexpected: $f")
         }
       }

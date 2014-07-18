@@ -26,7 +26,7 @@ object FlowFrequencyUpdate {
 
 
 class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   var frequencies = scala.collection.mutable.HashMap[Any, Int]() withDefaultValue 0
 

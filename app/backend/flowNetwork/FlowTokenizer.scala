@@ -10,12 +10,13 @@ object FlowTokenizer {
 }
 
 class FlowTokenizer(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, x, y, 1 ,1) with TargetableFlow with FlowFieldOfInterest {
 
   var separator: String = " "
 
   addConfigMapGetters(() => Map(
-    "separator" -> separator
+    "separator" -> separator,
+    "display" -> "separator"
   ))
 
   addConfigSetters({

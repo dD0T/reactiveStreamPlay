@@ -10,7 +10,7 @@ object FlowAccumulator {
 }
 
 class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   var accumulator: Double = 0.0
 

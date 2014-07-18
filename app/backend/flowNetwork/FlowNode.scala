@@ -8,7 +8,8 @@ case class Configuration(config: Map[String, String])
 case object GetConfiguration
 
 object FlowNode {
-  def props(id: Long, name:String, x: Int, y: Int): Props = Props(new FlowNode(id, name, x, y))
+  def props(id: Long, name:String, x: Int, y: Int, outputs: Int, inputs: Int): Props =
+    Props(new FlowNode(id, name, x, y, outputs, inputs))
 }
 
 /**
@@ -27,8 +28,12 @@ object FlowNode {
  * @param id Unique numeric ID of this actor
  * @param x X coordinate on screen
  * @param y Y coordinate on screen
+ * @param outputs Number of outputs on this element
+ * @param inputs Number of inputs on this element
  */
-class FlowNode(val id:Long, var name: String,  var x: Int, var y: Int) extends Actor with ActorLogging {
+class FlowNode(val id:Long, var name: String,
+               var x: Int, var y: Int,
+               val outputs: Int, val inputs: Int) extends Actor with ActorLogging {
 
   /** Given (key, value) set config item key to value.
     *
@@ -82,7 +87,9 @@ class FlowNode(val id:Long, var name: String,  var x: Int, var y: Int) extends A
     "actor" -> self.path.toString(),
     "id" -> id.toString(),
     "x" -> x.toString(),
-    "y" -> y.toString()
+    "y" -> y.toString(),
+    "outputs" -> outputs.toString(),
+    "inputs" -> inputs.toString()
   ))
 
   /** Called for each potential change of a configuration variable. */

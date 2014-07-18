@@ -7,7 +7,7 @@ object FlowSentiment {
 }
 
 class FlowSentiment(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   // Utilizes http://sentiwordnet.isti.cnr.it/
   override def active: Receive = ???

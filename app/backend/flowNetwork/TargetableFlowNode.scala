@@ -14,7 +14,7 @@ trait TargetableFlow extends FlowNode {
   def passive: Receive = PartialFunction.empty
 
   addConfigMapGetters(() => Map(
-    "active" -> (if (target != null) "true" else "false"),
+    "active" -> (if (target != null) "1" else "0"),
     "target" -> (if (target != null) target.path.toString() else "None")
   ))
 

@@ -80,18 +80,6 @@ $(function() {
             });
         };
 
-    var _addEndpoints = function(toId, sourceAnchors, targetAnchors) {
-        for (var i = 0; i < sourceAnchors.length; i++) {
-            var sourceUUID = toId + sourceAnchors[i];
-            instance.addEndpoint(toId, sourceEndpoint, { anchor:sourceAnchors[i], uuid:sourceUUID });
-        }
-        for (var j = 0; j < targetAnchors.length; j++) {
-            var targetUUID = toId + targetAnchors[j];
-            instance.addEndpoint(toId, targetEndpoint, { anchor:targetAnchors[j], uuid:targetUUID });
-        }
-    };
-
-
     $("#flowchart-demo").click(function (evt) {
         var mode = $("input[name=mode]:checked").val();
         if (mode != "add") return;
@@ -114,6 +102,17 @@ $(function() {
         })
     })
 
+    var _addEndpoints = function(toId, sourceAnchors, targetAnchors) {
+        for (var i = 0; i < sourceAnchors.length; i++) {
+            var sourceUUID = toId + sourceAnchors[i];
+            instance.addEndpoint(toId, sourceEndpoint, { anchor:sourceAnchors[i], uuid:sourceUUID });
+        }
+        for (var j = 0; j < targetAnchors.length; j++) {
+            var targetUUID = toId + targetAnchors[j];
+            instance.addEndpoint(toId, targetEndpoint, { anchor:targetAnchors[j], uuid:targetUUID });
+        }
+    };
+
     feed.onmessage = function(e) {
         var cfg = JSON.parse(e.data).config
         console.log(cfg)
@@ -121,13 +120,14 @@ $(function() {
             if ($("#"+cfg.id).length == 0) {
                 console.log("Creating new node " + cfg.id)
                 // New object
-                $("#flowchart-demo").append('<div class="window" id="' + cfg.id +'">'
-                                + '<strong>' + cfg.name + '</strong><br/><br/></div>')
+                $("#flowchart-demo").append('<div class="window" id="' + cfg.id +'"></div>')
 
-                // Setup jsplumb
+                // We offer op to three inputs or outputs depending on how many
+                // the node actually has
+                var inputs = ["Left", "TopLeft", "BottomLeft"].slice(0, cfg.inputs)
+                var outputs = ["Right", "BottomRight", "TopRight"].slice(0, cfg.outputs)
 
-                //TODO: Obviously should be node type or config dependent
-                _addEndpoints(cfg.id, ["TopCenter", "BottomCenter"], ["LeftMiddle", "RightMiddle"]);
+                _addEndpoints(cfg.id, outputs, inputs);
 
                 instance.draggable(cfg.id, {
                     grid: [20, 20],
@@ -137,8 +137,32 @@ $(function() {
 
             var node = $("#"+cfg.id)
 
+            var displayString = ""
+            if ("display" in cfg) {
+                var displayFields =cfg.display.split(",").map(function (n) {
+                    // Should do the trick most of the time. Obviously some edge cases
+                    var value = (cfg[n] == "" || cfg[n] == " " || isNaN(cfg[n]))
+                        ? ('"' + cfg[n] + '"')
+                        : cfg[n]
+
+                    return n + ": " + value
+                })
+                if (displayFields.length > 0) {
+                    var displayString = '<p>' + displayFields.join('<br />') + '</p>'
+                }
+            }
+
+            if ("active" in cfg) {
+                if (cfg.active == true) {
+                    node.removeClass("inactive")
+                } else {
+                    node.addClass("inactive")
+                }
+            }
+
             node.css("left", cfg.x + "px")
                 .css("top", cfg.y + "px")
+                .html('<strong>' + cfg.name + '</strong>' + displayString)
         })
     }
 

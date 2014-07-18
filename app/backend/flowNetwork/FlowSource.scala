@@ -11,14 +11,20 @@ object FlowSource {
 }
 
 class FlowSource(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y) with TargetableFlow {
+  extends FlowNode(id, name, x, y, 1, 0) with TargetableFlow {
 
   import context.dispatcher
 
   private case object Tick
 
   val tick = context.system.scheduler.schedule(1 second, 1 second, self, Tick)
-  var uid: Long = 1
+  var uid: Long = 0
+
+  addConfigMapGetters(() => Map(
+    "sourced" -> uid.toString,
+    "display" -> "sourced"
+  ))
+
 
   override def postStop() = tick.cancel()
 
@@ -29,5 +35,6 @@ class FlowSource(id: Long, name: String,  x: Int, y: Int)
     case Tick =>
       target ! Sentiment(uid, 0, Random.nextDouble, Random.nextDouble)
       uid += 1
+      configUpdated()
   }
 }

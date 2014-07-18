@@ -13,7 +13,7 @@ object FlowFilter {
 }
 
 class FlowFilter(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   var filter: String = ""
   var dropped: Int = 0
@@ -26,7 +26,8 @@ class FlowFilter(id: Long, name: String,  x: Int, y: Int)
 
   addConfigMapGetters(() => Map(
     "filter" -> filter,
-    "[dropped]" -> dropped.toString() //TODO: Not pushed to client when changed. Add a "watchedfields" trait or sth.
+    "dropped" -> dropped.toString(), //TODO: Not pushed to client when changed. Add a "watchedfields" trait or sth.
+    "display" -> "filter,dropped"
   ))
 
   override def active: Receive = {
