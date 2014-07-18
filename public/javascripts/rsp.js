@@ -2,29 +2,6 @@ $(function() {
 
     var feed = new EventSource("/events")
 
-    feed.onmessage = function(e) {
-        console.log(JSON.parse(e.data))
-    }
-
-    $("#content").click(function (evt) {
-        var mode = $("input[name=mode]:checked").val();
-        if (mode != "add") return;
-
-        var nodetype = $("input[name=nodetype]:checked").val();
-        var x = evt.pageX - this.offsetLeft;
-        var y = evt.pageY - this.offsetTop;
-
-        console.log("Trying to create " + nodetype + " node at (" + x + "," + y + ")");
-        $.ajax({url: "/add",
-                data: {
-                    "nodetype": nodetype,
-                    "x": x,
-                    "y": y
-                }
-
-        })
-    })
-
     var instance = jsPlumb.getInstance({
         // default drag options
         DragOptions : { cursor: 'pointer', zIndex:2000 },
@@ -106,32 +83,71 @@ $(function() {
     var _addEndpoints = function(toId, sourceAnchors, targetAnchors) {
         for (var i = 0; i < sourceAnchors.length; i++) {
             var sourceUUID = toId + sourceAnchors[i];
-            instance.addEndpoint("flowchart" + toId, sourceEndpoint, { anchor:sourceAnchors[i], uuid:sourceUUID });
+            instance.addEndpoint(toId, sourceEndpoint, { anchor:sourceAnchors[i], uuid:sourceUUID });
         }
         for (var j = 0; j < targetAnchors.length; j++) {
             var targetUUID = toId + targetAnchors[j];
-            instance.addEndpoint("flowchart" + toId, targetEndpoint, { anchor:targetAnchors[j], uuid:targetUUID });
+            instance.addEndpoint(toId, targetEndpoint, { anchor:targetAnchors[j], uuid:targetUUID });
         }
     };
 
-    // suspend drawing and initialise.
+
+    $("#flowchart-demo").click(function (evt) {
+        var mode = $("input[name=mode]:checked").val();
+        if (mode != "add") return;
+
+        var nodetype = $("input[name=nodetype]:checked").val();
+
+        // Calculate the click position relative to content which is our scrollable area
+        var content = $('#content')
+        var x = evt.pageX + content.scrollLeft() - content.offset().left
+        var y = evt.pageY + content.scrollTop() - content.offset().top
+
+        console.log("Trying to create " + nodetype + " node at (" + x + "," + y + ")");
+        $.ajax({url: "/add",
+            data: {
+                "nodetype": nodetype,
+                "x": x,
+                "y": y
+            }
+
+        })
+    })
+
+    feed.onmessage = function(e) {
+        var cfg = JSON.parse(e.data).config
+        console.log(cfg)
+        instance.doWhileSuspended(function() {
+            if ($("#"+cfg.id).length == 0) {
+                console.log("Creating new node " + cfg.id)
+                // New object
+                $("#flowchart-demo").append('<div class="window" id="' + cfg.id +'">'
+                                + '<strong>' + cfg.name + '</strong><br/><br/></div>')
+
+                // Setup jsplumb
+
+                //TODO: Obviously should be node type or config dependent
+                _addEndpoints(cfg.id, ["TopCenter", "BottomCenter"], ["LeftMiddle", "RightMiddle"]);
+
+                instance.draggable(cfg.id, {
+                    grid: [20, 20],
+                    containment:"parent"
+                });
+            }
+
+            var node = $("#"+cfg.id)
+
+            node.css("left", cfg.x + "px")
+                .css("top", cfg.y + "px")
+        })
+    }
+
     instance.doWhileSuspended(function() {
-
-        _addEndpoints("Window4", ["TopCenter", "BottomCenter"], ["LeftMiddle", "RightMiddle"]);
-        _addEndpoints("Window2", ["LeftMiddle", "BottomCenter"], ["TopCenter", "RightMiddle"]);
-        _addEndpoints("Window3", ["RightMiddle", "BottomCenter"], ["LeftMiddle", "TopCenter"]);
-        _addEndpoints("Window1", ["LeftMiddle", "RightMiddle"], ["TopCenter", "BottomCenter"]);
-
         // listen for new connections; initialise them the same way we initialise the connections at startup.
         instance.bind("connection", function(connInfo, originalEvent) {
             init(connInfo.connection);
         });
 
-        // make all the window divs draggable
-        instance.draggable(jsPlumb.getSelector(".flowchart-demo .window"), {
-            grid: [20, 20],
-            containment:"parent"
-        });
         // THIS DEMO ONLY USES getSelector FOR CONVENIENCE. Use your library's appropriate selector
         // method, or document.querySelectorAll:
         //jsPlumb.draggable(document.querySelectorAll(".window"), { grid: [20, 20] });

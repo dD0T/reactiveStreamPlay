@@ -12,6 +12,7 @@ object MessageTranslator {
 class MessageTranslator(val chan: Channel[JsValue]) extends Actor with ActorLogging {
   override def receive: Receive = {
     case (id: Long, Configuration(data)) =>
-      chan.push(Json.obj(id.toString -> Json.toJson(data)))
+      chan.push(Json.obj("id" -> id.toString,
+                         "config" -> Json.toJson(data)))
   }
 }
