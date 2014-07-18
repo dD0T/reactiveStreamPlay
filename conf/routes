@@ -5,6 +5,7 @@
 # Home page
 GET        /                    controllers.Application.overview
 GET        /flow                controllers.Application.flow
+GET        /add                 controllers.Application.add(nodetype: String, x: Int, y: Int)
 GET        /events              controllers.Application.events
 GET        /reset               controllers.Application.reset
 

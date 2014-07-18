@@ -1,50 +1,50 @@
 @()(implicit request: RequestHeader)
 
-@main("RSP - Flow") {
-    <style>
-    #flowchartWindow1 { top:40em;left:30em;}
-    #flowchartWindow2 { top:15em; left:15em;}
-    #flowchartWindow3 { top:30em;left:15em; }
-    #flowchartWindow4 { top:8em; left:35em;}
-    </style>
+@scripts = {
+    <script src="@routes.Assets.at("javascripts/dom.jsPlumb-1.6.2.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("javascripts/rsp.js")" type="text/javascript"></script>
+}
+
+@styles = {
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/jsplumb.css")">
+}
+
+@main("RSP - Flow", scripts, styles) {
     <div class="container-fluid" id="container">
     <div class="col-xs-2 btn-group btn-group-vertical" data-toggle="buttons">
         <div class="btn-group" data-toggle="buttons">
+            <label class="btn btn-default">
+                <input type="radio" name="mode" value="move"><span class="glyphicon glyphicon-move pull-left"></span> Move
+            </label>
             <label class="btn btn-default active">
-                <input type="radio" name="options" id="move_mode"><span class="glyphicon glyphicon-move pull-left"></span> Move
+                <input type="radio" name="mode" value="add" checked><span class="glyphicon glyphicon-plus pull-left"></span> Add
             </label>
             <label class="btn btn-default">
-                <input type="radio" name="options" id="add_mode"><span class="glyphicon glyphicon-plus pull-left"></span> Add
-            </label>
-            <label class="btn btn-default">
-                <input type="radio" name="options" id="remove_mode"><span class="glyphicon glyphicon-minus pull-left"></span> Remove
+                <input type="radio" name="mode" value="remove"><span class="glyphicon glyphicon-minus pull-left"></span> Remove
             </label>
         </div>
         &nbsp;
         <div class="btn-group" data-toggle="buttons">
-            <label class="btn btn-default">
-                <input type="radio" name="options" id="add_twitter_source"><span class="glyphicon glyphicon-cloud pull-left"></span> Twitter
+            <label class="btn btn-default active">
+                <input type="radio" name="nodetype" value="FlowSource" checked><span class="glyphicon glyphicon-cloud pull-left"></span> Twitter
             </label>
             <label class="btn btn-default">
-                <input type="radio" name="options" id="add_filter"><span class="glyphicon glyphicon-filter pull-left"></span> Filter
+                <input type="radio" name="nodetype" value="FlowFilter"><span class="glyphicon glyphicon-filter pull-left"></span> Filter
             </label>
             <label class="btn btn-default">
-                <input type="radio" name="options" id="add_frequency_counter"><span class="glyphicon glyphicon-stats pull-left"></span> Freq. Cnt.
+                <input type="radio" name="nodetype" value="FlowFrequency"><span class="glyphicon glyphicon-stats pull-left"></span> Freq. Cnt.
             </label>
             <label class="btn btn-default">
-                <input type="radio" name="options" id="add_tokenizer">Tokenizer
+                <input type="radio" name="nodetype" value="FlowTokenizer">Tokenizer
             </label>
             <label class="btn btn-default">
-                <input type="radio" name="options" id="option3">...
+                <input type="radio" name="nodetype" value="option3">...
             </label>
         </div>
     </div>
         <div class="col-xs-10" id="content">
             <div class="demo flowchart-demo" id="flowchart-demo">
-                <div class="window" id="flowchartWindow1"><strong>1</strong><br/><br/></div>
-                <div class="window" id="flowchartWindow2"><strong>2</strong><br/><br/></div>
-                <div class="window" id="flowchartWindow3"><strong>3</strong><br/><br/></div>
-                <div class="window" id="flowchartWindow4"><strong>4</strong><br/><br/></div>
+
             </div>
         </div>
     </div>

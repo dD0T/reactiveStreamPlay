@@ -1,10 +1,29 @@
-jsPlumb.ready(function() {
+$(function() {
 
     var feed = new EventSource("/events")
 
     feed.onmessage = function(e) {
         console.log(JSON.parse(e.data))
     }
+
+    $("#content").click(function (evt) {
+        var mode = $("input[name=mode]:checked").val();
+        if (mode != "add") return;
+
+        var nodetype = $("input[name=nodetype]:checked").val();
+        var x = evt.pageX - this.offsetLeft;
+        var y = evt.pageY - this.offsetTop;
+
+        console.log("Trying to create " + nodetype + " node at (" + x + "," + y + ")");
+        $.ajax({url: "/add",
+                data: {
+                    "nodetype": nodetype,
+                    "x": x,
+                    "y": y
+                }
+
+        })
+    })
 
     var instance = jsPlumb.getInstance({
         // default drag options
@@ -117,13 +136,6 @@ jsPlumb.ready(function() {
         // method, or document.querySelectorAll:
         //jsPlumb.draggable(document.querySelectorAll(".window"), { grid: [20, 20] });
 
-        // connect a few up
-        instance.connect({uuids:["Window2BottomCenter", "Window3TopCenter"], editable:true});
-        instance.connect({uuids:["Window2LeftMiddle", "Window4LeftMiddle"], editable:true});
-        instance.connect({uuids:["Window4TopCenter", "Window4RightMiddle"], editable:true});
-        instance.connect({uuids:["Window3RightMiddle", "Window2RightMiddle"], editable:true});
-        instance.connect({uuids:["Window4BottomCenter", "Window1TopCenter"], editable:true});
-        instance.connect({uuids:["Window3BottomCenter", "Window1BottomCenter"], editable:true});
         //
 
         //
