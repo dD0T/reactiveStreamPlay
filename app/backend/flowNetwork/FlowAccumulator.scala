@@ -5,12 +5,13 @@ import backend.NextFlowUID
 import backend.flowTypes.{NumberObject, FlowObject}
 
 object FlowAccumulator {
+  var nodeType = "FlowAccumulator"
   def props(id: Long, name: String,  x: Int, y: Int): Props =
     Props(new FlowAccumulator(id, name, x, y))
 }
 
 class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, FlowAccumulator.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   var accumulator: Double = 0.0
 

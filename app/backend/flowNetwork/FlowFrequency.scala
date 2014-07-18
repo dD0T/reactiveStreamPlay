@@ -6,6 +6,7 @@ import backend.flowTypes.FlowObject
 import scala.util.Sorting
 
 object FlowFrequency {
+  var nodeType = "FlowFrequency"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFrequency(id, name, x, y))
 }
 
@@ -26,7 +27,7 @@ object FlowFrequencyUpdate {
 
 
 class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, FlowFrequency.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   var frequencies = scala.collection.mutable.HashMap[Any, Int]() withDefaultValue 0
 
@@ -63,7 +64,7 @@ class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
               case _ => false
             })
 
-            target ! ??? //TODO: Figure out how to best forward this
+            //target ! ??? //TODO: Figure out how to best forward this
           }
         }
         case None => log.debug(s"Message ${o.uid} doesn't have field $fieldOfInterest")

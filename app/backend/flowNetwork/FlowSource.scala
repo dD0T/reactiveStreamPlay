@@ -7,11 +7,12 @@ import backend.flowTypes.Sentiment
 import scala.concurrent.duration._
 
 object FlowSource {
+  var nodeType = "FlowSource"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSource(id, name, x, y))
 }
 
 class FlowSource(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y, 1, 0) with TargetableFlow {
+  extends FlowNode(id, name, FlowSource.nodeType, x, y, 1, 0) with TargetableFlow {
 
   import context.dispatcher
 

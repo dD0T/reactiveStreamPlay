@@ -6,11 +6,12 @@ import akka.event.Logging
 import backend.NextFlowUID
 
 object FlowTokenizer {
+  var nodeType = "FlowTokenizer"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowTokenizer(id, name, x, y))
 }
 
 class FlowTokenizer(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y, 1 ,1) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, FlowTokenizer.nodeType, x, y, 1 ,1) with TargetableFlow with FlowFieldOfInterest {
 
   var separator: String = " "
 

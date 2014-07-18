@@ -9,11 +9,12 @@ case object GetFilter
 case object GetDropped
 
 object FlowFilter {
+  var nodeType = "FlowFilter"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFilter(id, name, x, y))
 }
 
 class FlowFilter(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, FlowFilter.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
   var filter: String = ".*"
   var dropped: Int = 0

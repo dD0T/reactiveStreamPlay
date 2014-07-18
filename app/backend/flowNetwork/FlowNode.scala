@@ -8,8 +8,8 @@ case class Configuration(config: Map[String, String])
 case object GetConfiguration
 
 object FlowNode {
-  def props(id: Long, name:String, x: Int, y: Int, outputs: Int, inputs: Int): Props =
-    Props(new FlowNode(id, name, x, y, outputs, inputs))
+  def props(id: Long, name:String, nodeType:String, x: Int, y: Int, outputs: Int, inputs: Int): Props =
+    Props(new FlowNode(id, name, nodeType, x, y, outputs, inputs))
 }
 
 /**
@@ -24,14 +24,15 @@ object FlowNode {
  * Configuration object containing said updates to this actor. Whether application failed
  * or not this actor will send a full update of his state to his parent.
  *
- * @param name Display name for this actor
  * @param id Unique numeric ID of this actor
+ * @param name Display name for this actor
+ * @param nodeType Name of the node type (e.g. FlowSource)
  * @param x X coordinate on screen
  * @param y Y coordinate on screen
  * @param outputs Number of outputs on this element
  * @param inputs Number of inputs on this element
  */
-class FlowNode(val id:Long, var name: String,
+class FlowNode(val id:Long, var name: String, val nodeType: String,
                var x: Int, var y: Int,
                val outputs: Int, val inputs: Int) extends Actor with ActorLogging {
 
@@ -89,7 +90,8 @@ class FlowNode(val id:Long, var name: String,
     "x" -> x.toString(),
     "y" -> y.toString(),
     "outputs" -> outputs.toString(),
-    "inputs" -> inputs.toString()
+    "inputs" -> inputs.toString(),
+    "nodeType" -> nodeType
   ))
 
   /** Called for each potential change of a configuration variable. */

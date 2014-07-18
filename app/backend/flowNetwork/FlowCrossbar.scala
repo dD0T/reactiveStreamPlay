@@ -6,14 +6,13 @@ import backend.flowTypes.FlowObject
 
 case class MembershipUpdate(targets: Set[ActorRef])
 
-
-
 object FlowCrossbar {
+  var nodeType = "FlowCrossbar"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowCrossbar(id, name, x, y))
 }
 
 class FlowCrossbar(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, x, y, 3 , 3) {
+  extends FlowNode(id, name, FlowCrossbar.nodeType, x, y, 3 , 3) {
 
   var targets = Set[ActorRef]()
 
