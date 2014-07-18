@@ -59,6 +59,13 @@ object Application extends Controller {
     Ok("Update propagated")
   }
 
+  def deleteNode(id: Long) = Action.async {
+    implicit val timeout = Timeout(500 millis)
+    for {
+      id <- sup ? DeleteFlowObject(id)
+    } yield Ok(id.toString)
+  }
+
   def events = Action {
     Ok.feed(eventEnumerator through EventSource())
       .as("text/event-stream")

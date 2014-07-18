@@ -145,8 +145,15 @@ $(function() {
         return result
     };
 
-    var pushConfig = function(id, config) {
+    var deleteNode = function(id) {
+        console.log("Requesting deletion of " + id);
 
+        $.ajax({url: "/node/" + id,
+            method: "DELETE"
+        });
+    }
+
+    var pushConfig = function(id, config) {
         $.ajax({url: "/node/" + id,
                 method: "POST",
                 processData: false,
@@ -155,7 +162,7 @@ $(function() {
         })
     };
 
-    var _addEndpoints = function(toId, sourceAnchors, targetAnchors) {
+    var addEndpoints = function(toId, sourceAnchors, targetAnchors) {
         for (var i = 0; i < sourceAnchors.length; i++) {
             var sourceUUID = toId + sourceAnchors[i];
             instance.addEndpoint(toId, sourceEndpoint, { anchor:sourceAnchors[i], uuid:sourceUUID });
@@ -166,82 +173,127 @@ $(function() {
         }
     };
 
+
+    var updateNodeFromConfiguration = function(cfg, newNode) {
+        var node = $("#" + cfg.id);
+        if (node.is('.ui-draggable-dragging')) {
+            // Node is currently being dragged. Discard updates.
+            // This is fine as once the drag is done the position update
+            // will cause a state update. This will only leave a small
+            // window for updates to cause a bit of jumping and that should
+            // be it.
+            return;
+        }
+
+        var displayString = "";
+        if ("display" in cfg) {
+            var displayFields = cfg.display.split(",").map(function (n) {
+                // Should do the trick most of the time. Obviously some edge cases
+                var value = (cfg[n] == "" || cfg[n] == " " || isNaN(cfg[n]))
+                    ? ('"' + cfg[n] + '"') // Quote non-numbers
+                    : ((cfg[n] % 1 === 0) // Check if Int
+                    ? cfg[n] // Int
+                    : Number(cfg[n]).toFixed(4)); // Round double
+
+                return n + ": " + value
+            });
+            if (displayFields.length > 0) {
+                displayString = displayFields.join('<br />');
+            }
+        }
+
+        if ("active" in cfg) {
+            if (cfg.active == true) {
+                node.removeClass("inactive")
+            } else {
+                node.addClass("inactive")
+            }
+        }
+
+        node.css("left", cfg.x + "px")
+            .css("top", cfg.y + "px")
+
+        node.find("strong").html(cfg.name);
+
+        if (displayString != "") {
+            node.find("p")
+                .show()
+                .html(displayString);
+        } else {
+            node.find("p")
+                .hide()
+        }
+
+        if (newNode) {
+            // Attach additional event listeners
+            node.draggable({
+                stop: function (e) {
+                    pos = node.position();
+                    pushConfig(node.attr('id'), {
+                        x: String(pos.left),
+                        y: String(pos.top)
+                    })
+                }
+            })
+        }
+    };
+
+    var createNewNode = function(cfg) {
+        console.log("Creating new node " + cfg.id);
+        // New object
+        $("#flowchart-demo").append(
+            '<div class="window" id="' + cfg.id + '">' +
+                '<strong/>' +
+                '<span class="glyphicon glyphicon-remove pull-right"></span>' +
+                '<p/>'+
+            '</div>');
+
+        // We offer op to three inputs or outputs depending on how many
+        // the node actually has
+        var inputs = ["Left", "TopLeft", "BottomLeft"].slice(0, cfg.inputs);
+        var outputs = ["Right", "BottomRight", "TopRight"].slice(0, cfg.outputs);
+
+        $("#"+cfg.id+" span").click(function(evt) {
+            // Deletion
+            deleteNode(cfg.id);
+        });
+
+        instance.draggable(cfg.id, {
+            grid: [20, 20],
+            containment: "parent"
+        });
+
+        addEndpoints(cfg.id, outputs, inputs);
+
+    };
+
+    var doesExist = function(id) {
+        return $("#" + id).length > 0
+    };
+
     feed.onmessage = function(e) {
-        var cfg = JSON.parse(e.data).config;
-        console.log(cfg);
-        instance.doWhileSuspended(function() {
-            var newNode = false;
-            if ($("#"+cfg.id).length == 0) {
-                console.log("Creating new node " + cfg.id);
-                // New object
-                $("#flowchart-demo").append('<div class="window" id="' + cfg.id +'"></div>');
+        var data = JSON.parse(e.data);
+        if (data.deleted == true) {
+            // Element deletion
+            instance.doWhileSuspended(function () {
+                jsPlumb.remove(data.id);
+            });
 
-                // We offer op to three inputs or outputs depending on how many
-                // the node actually has
-                var inputs = ["Left", "TopLeft", "BottomLeft"].slice(0, cfg.inputs);
-                var outputs = ["Right", "BottomRight", "TopRight"].slice(0, cfg.outputs);
+            return;
+        }
 
-                _addEndpoints(cfg.id, outputs, inputs);
-
-                instance.draggable(cfg.id, {
-                    grid: [20, 20],
-                    containment:"parent"
-                });
-                newNode = true;
-            }
-
-            var node = $("#"+cfg.id);
-            if (node.is('.ui-draggable-dragging')) {
-                // Node is currently being dragged. Discard updates.
-                // This is fine as once the drag is done the position update
-                // will cause a state update. This will only leave a small
-                // window for updates to cause a bit of jumping and that should
-                // be it.
-                return;
-            }
-
-            var displayString = "";
-            if ("display" in cfg) {
-                var displayFields =cfg.display.split(",").map(function (n) {
-                    // Should do the trick most of the time. Obviously some edge cases
-                    var value = (cfg[n] == "" || cfg[n] == " " || isNaN(cfg[n]))
-                        ? ('"' + cfg[n] + '"') // Quote non-numbers
-                        : ((cfg[n] % 1 === 0) // Check if Int
-                                ? cfg[n] // Int
-                                : Number(cfg[n]).toFixed(4)); // Round double
-
-                    return n + ": " + value
-                });
-                if (displayFields.length > 0) {
-                    displayString = '<p>' + displayFields.join('<br />') + '</p>';
+        if ("config" in data) {
+            var cfg = data.config;
+            console.log(cfg);
+            instance.doWhileSuspended(function () {
+                var newNode = false;
+                if (!doesExist(cfg.id)) {
+                    createNewNode(cfg);
+                    newNode = true;
                 }
-            }
-
-            if ("active" in cfg) {
-                if (cfg.active == true) {
-                    node.removeClass("inactive")
-                } else {
-                    node.addClass("inactive")
-                }
-            }
-
-            node.css("left", cfg.x + "px")
-                .css("top", cfg.y + "px")
-                .html('<strong>' + cfg.name + '</strong>' + displayString);
-
-            if (newNode) {
-                // Attach additional event listeners
-                node.draggable({
-                    stop: function (e) {
-                        pos = node.position();
-                        pushConfig(node.attr('id'), {
-                            x: String(pos.left),
-                            y: String(pos.top)
-                        })
-                    }
-                })
-            }
-        })
+                updateNodeFromConfiguration(cfg, newNode);
+            })
+        }
     };
 
     instance.doWhileSuspended(function() {
