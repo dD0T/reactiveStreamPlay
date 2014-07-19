@@ -9,18 +9,28 @@ case class Register(observer: ActorRef)
 
 case object DetectConfiguration
 
+case class LookupConnection(sourceId: Long, targetId: Long)
 case class LookupObj(id: Long)
 case class LookupId(obj: ActorRef)
 
 case object GetFlowObjectTypes
+case object GetFlowObjects
 case class CreateFlowObject(what: String, x: Int, y: Int)
 case class DeleteFlowObject(id: Long)
 
 case object GetConnections
-case class Connect(source: Long, target: Long)
+case class Connect(source: Long, target: Long, attribus: Map[String, String])
 case class Disconnect(source: Long, target: Long)
 
 case class EventChannel(chan: Channel[JsValue])
+
+case object Shutdown
+case object Stopping
+
+/** Used for representation and update of the (key -> value) configuration in a Node/Connection */
+case class Configuration(config: Map[String, String])
+/** Requests configuration from a FlowNode/Connection */
+case object GetConfiguration
 
 object FlowSupervisor {
   def props(): Props = Props(new FlowSupervisor)
@@ -51,11 +61,38 @@ class FlowSupervisor extends Actor with ActorLogging {
 
   var flowIdToObject = scala.collection.mutable.Map.empty[Long, ActorRef]
   var flowObjectToId = scala.collection.mutable.Map.empty[ActorRef, Long]
-  var connections = scala.collection.mutable.Map.empty[(ActorRef, ActorRef), ActorRef]
+
+  var connectionObjToIds = scala.collection.mutable.Map.empty[ActorRef, (Long, Long)]
+  var connectionIdsToObj = scala.collection.mutable.Map.empty[(Long, Long), ActorRef]
+
   var observers = scala.collection.mutable.Set.empty[ActorRef]
 
-  private def connectionsFor(obj: ActorRef): scala.collection.mutable.Map[(ActorRef, ActorRef), ActorRef] =
-    connections.filter { case ((source, target),_) => (source == obj || target == obj) }
+  private def connectionsFor(id: Long): scala.collection.mutable.Map[(Long, Long), ActorRef] =
+    connectionIdsToObj.filter { case ((sourceId, targetId),_) => (sourceId == id || targetId == id) }
+
+  private def notifyObservers[T](message: T) = observers map { _ ! message }
+
+  private def disconnect(sourceId: Long, targetId: Long): Boolean = {
+    connectionIdsToObj.remove((sourceId, targetId)) match {
+      case Some(connection) =>
+        log.info(s"Disconnecting $sourceId and $targetId")
+
+        flowIdToObject.get(sourceId) match {
+          case Some(source) => source ! RemoveTarget(connection)
+          case None => // Fine, already gone
+        }
+
+        connectionIdsToObj.remove((sourceId, targetId))
+
+        notifyObservers((sourceId, targetId), None)
+        connection ! Shutdown
+        true
+
+      case _ =>
+        log.warning(s"Asked to disconnect $sourceId from $targetId but have no connection")
+        false
+    }
+  }
 
   def receive = {
     case GetFlowObjectTypes => sender() ! ordinaryFlowObjects.keys.toList
@@ -72,8 +109,8 @@ class FlowSupervisor extends Actor with ActorLogging {
     case DetectConfiguration =>
       log.info(s"${sender()} triggered configuration detection")
       // Request all node configurations
-      flowObjectToId foreach { case (obj, _) => obj ! GetConfiguration }
-      //TODO: Should be able to provide connection information too
+      flowObjectToId foreach { case (obj, _) => obj ! GetConfiguration}
+      connectionIdsToObj foreach { case ((_, _), con) => con ! GetConfiguration}
 
     case CreateFlowObject(objectType, x, y) =>
       ordinaryFlowObjects.get(objectType) match {
@@ -88,42 +125,60 @@ class FlowSupervisor extends Actor with ActorLogging {
           flowObjectToId += obj -> id
 
           obj ! GetConfiguration // Pull configuration
-          sender() ! (id, obj)
+          sender() ! Some((id, obj))
         }
         case None =>
           log.warning(s"Asked to create unknown flow object type $objectType")
+          None
       }
 
     case DeleteFlowObject(id: Long) =>
       flowIdToObject.get(id) match {
-        case Some(obj) => {
+        case Some(obj) =>
           log.info(s"Deleting node $id")
 
           // First disconnect
-          connectionsFor(obj) map { case ((source, target), _) => disconnect (source, target) }
+          connectionsFor(id) map { case ((sourceId, targetId), _) => disconnect(sourceId, targetId)}
           // Then delete
-          obj ! Kill
+          obj ! Shutdown
+
           flowIdToObject.remove(id)
           flowObjectToId.remove(obj)
 
-          sender() ! id // Ack delete of ID
-          observers map { (o) => o ! (id, None) } // Notify observers
-        }
+          sender() ! Some(id) // Ack delete of ID
+          notifyObservers(id, None)
+
         case None =>
           log.warning(s"Asked to delete unknown object $id")
+          sender() ! None
       }
 
     case Configuration(data) =>
       flowObjectToId.get(sender()) match {
-        case Some(id) => observers map { (o) => o ! (id, Configuration(data)) }
-        case None => log.error(s"Received configuration update from untracked actor ${sender()}")
+        case Some(id) => notifyObservers(id, Configuration(data))
+        case None =>
+          connectionObjToIds.get(sender()) match {
+            case Some((sourceId, targetId)) => notifyObservers((sourceId, targetId), Configuration(data))
+            case None => log.error(s"Received configuration update for untracked actor ${sender()}")
+          }
       }
 
     case (id: Long, Configuration(data)) =>
       // Forward config to addressed actor
       flowIdToObject.get(id) match {
-        case Some(obj) => obj ! Configuration(data)
-        case None => log.error(s"Asked to forward configuration for unknown id $id")
+        case Some(obj) =>
+          obj ! Configuration(data)
+          sender() ! true
+
+        case None =>
+          log.error(s"Asked to forward configuration for unknown id $id")
+          sender ! false
+      }
+
+    case LookupConnection(sourceId, targetId) =>
+      connectionIdsToObj.get((sourceId, targetId)) match {
+        case Some(connection) => sender() ! Some(connection)
+        case None => sender() ! None
       }
 
     case LookupObj(id) =>
@@ -138,43 +193,46 @@ class FlowSupervisor extends Actor with ActorLogging {
         case None => sender() ! None
       }
 
+    /**
+     * Returns a set of sourceID->targetID of all connections
+     */
     case GetConnections =>
-      sender() ! connections
+      sender() ! connectionIdsToObj.keySet
 
-    case Connect(sourceId, targetId) =>
+    /**
+     * Returns a set of all object IDs
+     */
+    case GetFlowObjects =>
+      sender() ! flowIdToObject.keySet
+
+    case Connect(sourceId, targetId, attributes) =>
       (flowIdToObject.get(sourceId), flowIdToObject.get(targetId)) match {
-        case (Some(source), Some(target)) if !connections.contains {(source, target)} => {
+        case (Some(source), Some(target)) if !connectionIdsToObj.contains {
+          (sourceId, targetId)
+        } => {
           log.info(s"Creating new connection from $source to $target")
-          val connection = context.actorOf(FlowConnection.props(source, target), name = newActorName("FlowConnection"))
-          connections += (source, target) -> connection
+          val connection = context.actorOf(
+            FlowConnection.props(source, sourceId, target, targetId, attributes),
+            name = newActorName("FlowConnection"))
+
+          connectionObjToIds += connection ->(sourceId, targetId)
+          connectionIdsToObj += (sourceId, targetId) -> connection
+
           source ! AddTarget(connection)
-          sender() ! ((sourceId, targetId), connection)
+          sender() ! Some(((sourceId, targetId), connection))
+          connection ! GetConfiguration
+
         }
-        case _ => log.warning(s"Asked to connect $sourceId with $targetId of which are invalid or already connected")
+        case _ =>
+          sender ! None
+          log.warning(s"Asked to connect $sourceId with $targetId of which are invalid or already connected")
       }
 
     case Disconnect(sourceId, targetId) =>
-      (flowIdToObject.get(sourceId), flowIdToObject.get(targetId)) match {
-        case (Some(source), Some(target)) => {
-          disconnect(source, target)
-          sender() ! (sourceId, targetId) // Ack disconnect
-        }
-        case _ =>
-          log.warning(s"Asked to connect $sourceId with $targetId of which at least one is unknown")
-          sender() ! (sourceId, targetId) // Those certainly aren't connected
+      if (disconnect(sourceId, targetId)) {
+        sender() ! Some((sourceId, targetId))
+      } else {
+        sender() ! None
       }
   }
-
-  private def disconnect(source: ActorRef, target: ActorRef) =
-    connections.remove((source, target)) match {
-      case Some(connection) =>
-        log.info(s"Disconnecting $source and $target")
-        source ! RemoveTarget(connection)
-        connection ! Kill
-        true
-
-      case _ =>
-        log.warning(s"Asked to disconnect $source from $target but have no connection")
-        false
-    }
 }

@@ -1,6 +1,6 @@
 $(function() {
 
-    var feed = new EventSource("/events")
+    var feed = new EventSource("/flow/events")
 
     var instance = jsPlumb.getInstance({
         // default drag options
@@ -89,24 +89,96 @@ $(function() {
         }
     };
 
-    $("#flowchart-demo").click(function (evt) {
-        var selected = $("input[name=nodetype]:checked")
-        var nodetype = selected.val();
-        if (nodetype == "") return;
 
-        pos = contentPosFromEvent(evt)
+    var deleteNode = function(id) {
+        console.log("Requesting deletion of " + id);
 
-        console.log("Trying to create " + nodetype + " node at (" + pos.x + "," + pos.y + ")");
-        $.ajax({url: "/node",
+        $.ajax({url: "/flow/nodes/" + id,
+            method: "DELETE"
+        });
+    };
+
+    var putNode = function(id, config) {
+        $.ajax({url: "/flow/nodes/" + id,
+            method: "PUT",
+            processData: false,
+            data: JSON.stringify(config),
+            contentType: "text/json"
+        })
+    };
+
+    var postNode = function(nodetype, position) {
+        var px = position.x | 0
+        var py = position.y | 0
+        console.log("Trying to create " + nodetype + " node at (" + px + "," + py + ")");
+        $.ajax({url: "/flow/nodes",
             method: "POST",
             processData: false,
             contentType: "text/json",
             data: JSON.stringify({
                 "nodeType": nodetype,
-                "x": String(pos.x | 0),
-                "y": String(pos.y | 0)
+                "x": String(px),
+                "y": String(py)
             })
         })
+    };
+
+
+    /**
+     * Blocking function for connecting two nodes
+     * @param sourceId Source node
+     * @param targetId Target node
+     * @param sourceLocation Source endpoint location
+     * @param targetLocation Target endpoint location
+     * @returns True if server reported connection as established, false otherwise.
+     */
+    var postConnection = function(sourceId, targetId, sourceLocation, targetLocation) {
+        console.log("Requesting connection from " + sourceId + " to " + targetId);
+
+        var result = false ;
+        $.ajax({url: "/flow/connections",
+            method: "POST",
+            processData: false,
+            data: JSON.stringify({
+                "sourceId": sourceId,
+                "targetId": targetId,
+                "sourceLocation": sourceLocation,
+                "targetLocation": targetLocation
+            }),
+            contentType: "text/json",
+            async: false,
+            success: function(html) {
+                result = true
+            }
+        });
+
+        return result;
+    };
+
+    var deleteConnection = function(sourceId, targetId) {
+        console.log("Requesting disconnect of " + sourceId + " from " + targetId);
+        var result = false;
+        $.ajax({url: "/flow/connections/" + sourceId + "/" + targetId,
+            method: "DELETE",
+            success: function(html) {
+                result = true;
+            },
+            async: false
+        });
+        return result
+    };
+
+    var disconnect = function(sourceId, targetId) {
+
+    };
+
+    $("#flowchart-demo").click(function (evt) {
+        var selected = $("input[name=nodetype]:checked")
+        var nodetype = selected.val();
+        if (nodetype == "") return;
+
+        position = contentPosFromEvent(evt)
+        postNode(nodetype, position);
 
         // We created an element. Flip back to move mode
         selected.parent("label")
@@ -117,60 +189,6 @@ $(function() {
                 .toggleClass("active")
     });
 
-    /**
-     * Blocking function for connecting two nodes
-     * @param sourceId Source node
-     * @param targetId Target node
-     * @returns True if server reported connection as established, false otherwise.
-     */
-    var connect = function(sourceId, targetId) {
-        console.log("Requesting connection from " + sourceId + " to " + targetId);
-        var result = false ;
-        $.ajax({url: "/connect",
-            data: {
-                "sourceId": sourceId,
-                "targetId": targetId
-            },
-            success: function(html) {
-                result = true;
-            },
-            async: false
-        });
-        return result;
-    };
-
-    var disconnect = function(sourceId, targetId) {
-        console.log("Requesting disconnect of " + sourceId + " from " + targetId);
-        var result = false;
-        $.ajax({url: "/disconnect",
-            data: {
-                "sourceId": sourceId,
-                "targetId": targetId
-            },
-            success: function(html) {
-                result = true;
-            },
-            async: false
-        });
-        return result
-    };
-
-    var deleteNode = function(id) {
-        console.log("Requesting deletion of " + id);
-
-        $.ajax({url: "/node/" + id,
-            method: "DELETE"
-        });
-    }
-
-    var putConfig = function(id, config) {
-        $.ajax({url: "/node/" + id,
-                method: "PUT",
-                processData: false,
-                data: JSON.stringify(config),
-                contentType: "text/json"
-        })
-    };
 
     var addEndpoints = function(toId, sourceAnchors, targetAnchors) {
         for (var i = 0; i < sourceAnchors.length; i++) {
@@ -239,7 +257,7 @@ $(function() {
             node.draggable({
                 stop: function (e) {
                     pos = node.position();
-                    putConfig(node.attr('id'), {
+                    putNode(node.attr('id'), {
                         x: String(pos.left),
                         y: String(pos.top)
                     })
@@ -284,15 +302,20 @@ $(function() {
     feed.onmessage = function(e) {
         var data = JSON.parse(e.data);
         if (data.deleted == true) {
-            // Element deletion
-            instance.doWhileSuspended(function () {
-                instance.remove(data.id);
-            });
+            if ("id" in data) {
+                // Element deletion
+                instance.doWhileSuspended(function () {
+                    instance.remove(data.id);
+                });
+            } else {
+                // Connection
+                console.log(data)
+            }
 
             return;
         }
 
-        if ("config" in data) {
+        if ("id" in data && "config" in data) {
             var cfg = data.config;
             console.log(cfg);
             instance.doWhileSuspended(function () {
@@ -303,26 +326,31 @@ $(function() {
                 }
                 updateNodeFromConfiguration(cfg, newNode);
             })
+        } else {
+            // connection
+            console.log(data);
+            instance.connect()
         }
     };
 
     instance.doWhileSuspended(function() {
         // listen for new connections; initialise them the same way we initialise the connections at startup.
-        instance.bind("connection", function(connInfo, originalEvent) {
-            init(connInfo.connection);
+        instance.bind("connection", function(conn, originalEvent) {
+            with (conn) {
+                postConnection(sourceId, targetId,
+                    sourceEndpoint.anchor.type,
+                    targetEndpoint.anchor.type);
+
+                init(connection);
+            }
         });
 
         instance.bind("click", function(conn, originalEvent) {
-            disconnect(conn.sourceId, conn.targetId);
-            jsPlumb.detach(conn);
+            instance.detach(conn);
         });
 
-        instance.bind("beforeDrop", function(c) {
-            return connect(c.sourceId, c.targetId);
-        });
-
-        instance.bind("beforeDetach", function(c) {
-            return disconnect(c.sourceId, c.targetId)
+        instance.bind("connectionDetached", function(conn, originalEvent) {
+            deleteConnection(conn.sourceId, conn.targetId)
         })
 
     });

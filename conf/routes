@@ -3,16 +3,21 @@
 # ~~~~
 
 # Home page
-GET           /                    controllers.Application.overview
-GET           /flow                controllers.Application.flow
-GET           /connect             controllers.Application.connect(sourceId: Long, targetId: Long)
-GET           /disconnect          controllers.Application.disconnect(sourceId: Long, targetId: Long)
-GET           /events              controllers.Application.events
-GET           /reset               controllers.Application.reset
-POST          /node                controllers.Application.postNode
-GET           /node/:id            controllers.Application.getNode(id: Long)
-PUT           /node/:id            controllers.Application.putNode(id: Long)
-DELETE        /node/:id            controllers.Application.deleteNode(id: Long)
+GET           /                                          controllers.Application.overview
+GET           /flow                                      controllers.Application.flow
+GET           /flow/events                               controllers.Application.events
+GET           /flow/reset                                controllers.Application.reset
+
+POST          /flow/nodes                                controllers.Application.postNode
+GET           /flow/nodes                                controllers.Application.getNodes
+GET           /flow/nodes/:id                            controllers.Application.getNode(id: Long)
+PUT           /flow/nodes/:id                            controllers.Application.putNode(id: Long)
+DELETE        /flow/nodes/:id                            controllers.Application.deleteNode(id: Long)
+
+POST          /flow/connections                          controllers.Application.postConnection
+GET           /flow/connections                          controllers.Application.getConnections
+GET           /flow/connections/:sourceId/:targetId      controllers.Application.getConnection(sourceId: Long, targetId: Long)
+DELETE        /flow/connections/:sourceId/:targetId      controllers.Application.deleteConnection(sourceId: Long, targetId: Long)
 
 # Map static resources from the /public folder to the /assets URL path
-GET           /assets/*file        controllers.Assets.at(path="/public", file)
+GET           /assets/*file                              controllers.Assets.at(path="/public", file)

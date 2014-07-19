@@ -2,11 +2,6 @@ package backend.flowNetwork
 
 import akka.actor.{Props, ActorRef, ActorLogging, Actor}
 
-/** Used for representation and update of the (key -> value) configuration in a FlowNode */
-case class Configuration(config: Map[String, String])
-/** Requests configuration from a FlowNode */
-case object GetConfiguration
-
 object FlowNode {
   def props(id: Long, name:String, nodeType:String, x: Int, y: Int, outputs: Int, inputs: Int): Props =
     Props(new FlowNode(id, name, nodeType, x, y, outputs, inputs))
@@ -114,5 +109,11 @@ class FlowNode(val id:Long, var name: String, val nodeType: String,
       // Send configuration update to system, if client was opportunistic this will
       // reset it in case we failed to set something
       configUpdated()
+
+    case Shutdown =>
+      log.info("Asked to shutdown")
+      context.parent ! Stopping
+      context.stop(self)
+
   }
 }

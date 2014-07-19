@@ -26,7 +26,6 @@ class FlowSource(id: Long, name: String,  x: Int, y: Int)
     "display" -> "sourced"
   ))
 
-
   override def postStop() = tick.cancel()
 
   override def passive = {
