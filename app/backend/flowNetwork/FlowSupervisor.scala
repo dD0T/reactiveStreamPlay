@@ -194,16 +194,16 @@ class FlowSupervisor extends Actor with ActorLogging {
       }
 
     /**
-     * Returns a set of sourceID->targetID of all connections
+     * Returns a set of sourceID, targetID of all connections
      */
     case GetConnections =>
-      sender() ! connectionIdsToObj.keySet
+      sender() ! connectionIdsToObj.keySet.toSet
 
     /**
      * Returns a set of all object IDs
      */
     case GetFlowObjects =>
-      sender() ! flowIdToObject.keySet
+      sender() ! flowIdToObject.keySet.toSet
 
     case Connect(sourceId, targetId, attributes) =>
       (flowIdToObject.get(sourceId), flowIdToObject.get(targetId)) match {

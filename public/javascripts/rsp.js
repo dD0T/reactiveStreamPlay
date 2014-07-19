@@ -304,12 +304,8 @@ $(function() {
                         sourceEndpoint.anchor.type,
                         targetEndpoint.anchor.type);
 
-                    connections[sourceId + targetId] = conn
+                    connections[sourceId + targetId] = conn.connection
                 }
-
-                // Update other properties
-                var con = connections[k];
-
             }
         });
 
@@ -325,6 +321,17 @@ $(function() {
             return true;
         })
 
+        instance.bind("beforeDrop", function(conn) {
+           with (conn) {
+               // Make sure we don't allow more than one connection for the same id pair
+               if (conn.sourceId + conn.targetId in connections) {
+                   console.log("User tried to connect already connected elements. Denied.");
+                   return false;
+               }
+           }
+            return true;
+        });
+
     });
 
     jsPlumb.fire("jsPlumbDemoLoaded", instance);
@@ -335,12 +342,6 @@ $(function() {
                 instance.remove(obj);
             });
         });
-    };
-
-    var feed = new EventSource("/flow/events");
-    feed.onerror = function(e) {
-        // Lost connection, wipe slate clean. We'll be restored on reconnect
-        deleteAllNodes();
         connections = {};
     };
 
@@ -348,6 +349,23 @@ $(function() {
         deleteAllNodes();
         $.ajax('flow/reset');
     });
+
+    var guiDisconnect = function(sourceId, targetId) {
+        // Disconnect
+        var k = sourceId + targetId;
+        if (k in connections) {
+            console.log("Remote deletion of " + sourceId + " to " + targetId + " connection");
+            var conn = connections[k];
+            delete connections[k];
+            instance.detach(conn);
+        }
+    }
+
+    var feed = new EventSource("/flow/events");
+    feed.onerror = function(e) {
+        // Lost connection, wipe slate clean. We'll be restored on reconnect
+        deleteAllNodes();
+    };
 
     feed.onmessage = function(e) {
         var data = JSON.parse(e.data);
@@ -358,14 +376,7 @@ $(function() {
                     instance.remove(data.id);
                 });
             } else {
-                // Disconnect
-                var k = data.sourceId + data.targetId;
-                if (k in connections) {
-                    console.log("Remote deletion of " + data.sourceId + " to " + data.targetId + " connection");
-                    var conn = connections[k];
-                    delete connections[k];
-                    instance.detach(conn);
-                }
+                guiDisconnect(data.sourceId, data.targetId)
             }
 
             return;
@@ -373,7 +384,7 @@ $(function() {
 
         if ("id" in data && "config" in data) {
             var cfg = data.config;
-            console.log(cfg);
+
             instance.doWhileSuspended(function () {
                 var newNode = false;
                 if (!doesExist(cfg.id)) {
@@ -386,21 +397,60 @@ $(function() {
             // Connection data
             var cfg = data.config;
             var k = cfg.sourceId + cfg.targetId;
+
+            var updateVisual = function(k) {
+                // Update connection state
+                var connection = connections[k];
+                connection.getOverlay("label").setLabel(
+                    cfg[cfg.display]
+                );
+            };
+
             if (!(k in connections)) {
                 // New connection
                 console.log("Remote connection of " + cfg.sourceId + " to " + cfg.targetId);
 
-                connections[k] = instance.connect({uuids:[
-                        cfg.sourceId + cfg.sourceLocation,
-                        cfg.targetId + cfg.targetLocation]
-                });
+                var createConnection = function(tries) {
+                    if (k in connections) {
+                        return; // Other message beat us to it
+                    }
+
+                    if (tries == 0) {
+                        console.log("Finally failed to create " + cfg.sourceId + " to " + cfg.targetId + "connection");
+                        return;
+                    }
+
+                    connections[k] = null; // Prevent us from sending this as a new connection
+
+                    if ($("#"+cfg.sourceId).length > 0 && $("#"+cfg.targetId).length > 0) {
+                        // Both endpoints exist
+                        var result = instance.connect({uuids: [
+                                cfg.sourceId + cfg.sourceLocation,
+                                cfg.targetId + cfg.targetLocation]
+                        });
+
+                        if (result == undefined || result == null) {
+                            console.log("Failed to establish connection from " + cfg.sourceId + " to " + cfg.targetId + ". Stuff might break.");
+                            delete connections[k];
+                            return;
+                        }
+                    } else {
+                        // Try again later
+                        console.log(cfg.sourceId + " or " + cfg.targetId + " does not exist (yet), will retry connection later");
+                        setTimeout(function() { createConnection(tries - 1) }, 500);
+                        delete connections[k];
+                        return;
+                    }
+
+                    connections[k] = result;
+                    updateVisual(k);
+                };
+
+                createConnection(5);
+            } else {
+                updateVisual(k);
             }
 
-            // Update connection state
-            var connInfo = connections[k];
-            connInfo.connection.getOverlay("label").setLabel(
-                cfg[cfg.display]
-            );
         }
     };
 

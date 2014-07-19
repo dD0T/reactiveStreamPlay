@@ -56,7 +56,7 @@ object Application extends Controller {
     implicit val timeout = Timeout(100 millis)
     for {
       connections <- (sup ? GetConnections).mapTo[Set[(Long, Long)]]
-    } yield Ok(Json.arr(connections.map {
+    } yield Ok(Json.toJson(connections.map {
       case (sourceId, targetId) => routes.Application.getConnection(sourceId, targetId).toString
     }))
   }
@@ -123,7 +123,7 @@ object Application extends Controller {
     implicit val timeout = Timeout(100 millis)
     for {
       nodes <- (sup ? GetFlowObjects).mapTo[Set[Long]]
-    } yield Ok(Json.arr(nodes.map {
+    } yield Ok(Json.toJson(nodes.map {
       id => routes.Application.getNode(id).toString
     }))
   }
@@ -175,7 +175,7 @@ object Application extends Controller {
   }
 
   def events = Action {
-    sup ! DetectConfiguration //FIXME: This obviously isn't a good way to handle this. Need history replay.
+    Akka.system.scheduler.scheduleOnce(100 milliseconds, sup, DetectConfiguration) //FIXME: This obviously isn't a good way to handle this. Need history replay.
 
     Ok.feed(eventEnumerator through EventSource())
       .as("text/event-stream")
