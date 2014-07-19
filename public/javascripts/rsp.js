@@ -69,14 +69,8 @@ $(function() {
             overlays:[
                 [ "Label", { location:[0.5, -0.5], label:"Drop", cssClass:"endpointTargetLabel" } ]
             ]
-        },
-        init = function(connection) {
-            connection.getOverlay("label").setLabel(connection.sourceId.substring(15) + "-" + connection.targetId.substring(15));
-            connection.bind("editCompleted", function(o) {
-                if (typeof console != "undefined")
-                    console.log("connection edited. path is now ", o.path);
-            });
         };
+
 
     var contentPosFromEvent = function(evt) {
         // Calculate the click position relative to content which is our scrollable area
@@ -297,15 +291,25 @@ $(function() {
         return $("#" + id).length > 0
     };
 
+    var connections = {}; // sourceId + targetId -> connection
+
     instance.doWhileSuspended(function() {
         // listen for new connections; initialise them the same way we initialise the connections at startup.
         instance.bind("connection", function(conn, originalEvent) {
             with (conn) {
-                postConnection(sourceId, targetId,
-                    sourceEndpoint.anchor.type,
-                    targetEndpoint.anchor.type);
+                var k = conn.sourceId + conn.targetId
+                if (!(k in connections)) {
+                    // New local connection yet to be propagates
+                    postConnection(sourceId, targetId,
+                        sourceEndpoint.anchor.type,
+                        targetEndpoint.anchor.type);
 
-                init(connection);
+                    connections[sourceId + targetId] = conn
+                }
+
+                // Update other properties
+                var con = connections[k];
+
             }
         });
 
@@ -313,8 +317,12 @@ $(function() {
             instance.detach(conn);
         });
 
-        instance.bind("connectionDetached", function(conn, originalEvent) {
-            deleteConnection(conn.sourceId, conn.targetId)
+        instance.bind("beforeDetach", function(conn) {
+            with (conn) {
+                deleteConnection(sourceId, targetId);
+                delete connections[sourceId + targetId];
+            }
+            return true;
         })
 
     });
@@ -332,7 +340,8 @@ $(function() {
     var feed = new EventSource("/flow/events");
     feed.onerror = function(e) {
         // Lost connection, wipe slate clean. We'll be restored on reconnect
-        deleteAllNodes()
+        deleteAllNodes();
+        connections = {};
     };
 
     $("#resetbutton").click(function() {
@@ -349,8 +358,14 @@ $(function() {
                     instance.remove(data.id);
                 });
             } else {
-                // Connection
-                console.log(data)
+                // Disconnect
+                var k = data.sourceId + data.targetId;
+                if (k in connections) {
+                    console.log("Remote deletion of " + data.sourceId + " to " + data.targetId + " connection");
+                    var conn = connections[k];
+                    delete connections[k];
+                    instance.detach(conn);
+                }
             }
 
             return;
@@ -368,9 +383,24 @@ $(function() {
                 updateNodeFromConfiguration(cfg, newNode);
             })
         } else {
-            // connection
-            console.log(data);
-            //instance.connect()
+            // Connection data
+            var cfg = data.config;
+            var k = cfg.sourceId + cfg.targetId;
+            if (!(k in connections)) {
+                // New connection
+                console.log("Remote connection of " + cfg.sourceId + " to " + cfg.targetId);
+
+                connections[k] = instance.connect({uuids:[
+                        cfg.sourceId + cfg.sourceLocation,
+                        cfg.targetId + cfg.targetLocation]
+                });
+            }
+
+            // Update connection state
+            var connInfo = connections[k];
+            connInfo.connection.getOverlay("label").setLabel(
+                cfg[cfg.display]
+            );
         }
     };
 
