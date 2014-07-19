@@ -286,7 +286,7 @@ $(function() {
         if (data.deleted == true) {
             // Element deletion
             instance.doWhileSuspended(function () {
-                jsPlumb.remove(data.id);
+                instance.remove(data.id);
             });
 
             return;
