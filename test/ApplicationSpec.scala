@@ -4,6 +4,7 @@ import org.junit.runner._
 
 import play.api.test._
 import play.api.test.Helpers._
+import play.api.libs.json._
 
 /**
  * Add your spec here.
@@ -34,4 +35,24 @@ class ApplicationSpec extends Specification {
       contentType(home) must beSome.which(_ == "text/html")
     }
   }
+/*TODO: Figure out how to run this (see http://stackoverflow.com/questions/18037940/play-fakerequest-with-specs2-remembers-request-across-tests)
+  "ApplicationNode" should {
+    "be able to create node on request" in new WithApplication {
+      var body = Json.obj(
+        "nodeType" -> "FlowSource",
+        "x" -> "0",
+        "y" -> "0"
+      )
+
+      var response = route(
+        FakeRequest(POST, "/node")
+          .withJsonBody(body)
+      ).get
+
+      println(response.toString)
+      contentAsJson(response).validate[Map[String,String]].asOpt must beSome
+    }
+
+  }
+  */
 }

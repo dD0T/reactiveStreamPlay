@@ -36,7 +36,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
       within(2 seconds) {
         val parent = system.actorOf(Props(new Actor {
           // Special construct for testing context.parent messages
-          val child = context.actorOf(FlowNode.props(0, "node", 100, 120), "flowNode")
+          val child = context.actorOf(FlowNode.props(0, "node", "Testing", 100, 120, 1, 2), "flowNode")
           def receive = {
             case x if sender == child => testActor forward x
             case x => child forward x
@@ -48,21 +48,26 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
         p.send(parent, GetConfiguration)
         var cfg = p.expectMsgType[Configuration].config
         cfg("id") must be equalTo("0")
+        cfg("nodeType") must be equalTo("Testing")
         cfg("name") must be equalTo("node")
         cfg("x") must be equalTo("100")
         cfg("y") must be equalTo("120")
+        cfg("inputs") must be equalTo("2")
+        cfg("outputs") must be equalTo("1")
 
         p.send(parent, Configuration(Map(
           "name" -> "bernd",
           "x" -> "321",
           "y" -> "123",
           "id" -> "can't set this",
+          "nodeType" -> "foo",
           "nonexistant" -> "thingy"
         )))
 
         // Should post update to parent
         cfg = expectMsgType[Configuration].config
         cfg("id") must be equalTo("0")
+        cfg("nodeType") must be equalTo("Testing")
         cfg("name") must be equalTo("bernd")
         cfg("x") must be equalTo("321")
         cfg("y") must be equalTo("123")
