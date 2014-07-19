@@ -1,7 +1,5 @@
 $(function() {
 
-    var feed = new EventSource("/flow/events")
-
     var instance = jsPlumb.getInstance({
         // default drag options
         DragOptions : { cursor: 'pointer', zIndex:2000 },
@@ -299,6 +297,40 @@ $(function() {
         return $("#" + id).length > 0
     };
 
+    instance.doWhileSuspended(function() {
+        // listen for new connections; initialise them the same way we initialise the connections at startup.
+        instance.bind("connection", function(conn, originalEvent) {
+            with (conn) {
+                postConnection(sourceId, targetId,
+                    sourceEndpoint.anchor.type,
+                    targetEndpoint.anchor.type);
+
+                init(connection);
+            }
+        });
+
+        instance.bind("click", function(conn, originalEvent) {
+            instance.detach(conn);
+        });
+
+        instance.bind("connectionDetached", function(conn, originalEvent) {
+            deleteConnection(conn.sourceId, conn.targetId)
+        })
+
+    });
+
+    jsPlumb.fire("jsPlumbDemoLoaded", instance);
+
+    var feed = new EventSource("/flow/events")
+    feed.onerror = function(e) {
+        // Lost connection, wipe slate clean. We'll be restored on reconnect
+        instance.doWhileSuspended(function () {
+            $(".window").each(function (idx, obj) {
+                instance.remove(obj)
+            });
+        })
+    }
+
     feed.onmessage = function(e) {
         var data = JSON.parse(e.data);
         if (data.deleted == true) {
@@ -329,32 +361,8 @@ $(function() {
         } else {
             // connection
             console.log(data);
-            instance.connect()
+            //instance.connect()
         }
     };
-
-    instance.doWhileSuspended(function() {
-        // listen for new connections; initialise them the same way we initialise the connections at startup.
-        instance.bind("connection", function(conn, originalEvent) {
-            with (conn) {
-                postConnection(sourceId, targetId,
-                    sourceEndpoint.anchor.type,
-                    targetEndpoint.anchor.type);
-
-                init(connection);
-            }
-        });
-
-        instance.bind("click", function(conn, originalEvent) {
-            instance.detach(conn);
-        });
-
-        instance.bind("connectionDetached", function(conn, originalEvent) {
-            deleteConnection(conn.sourceId, conn.targetId)
-        })
-
-    });
-
-    jsPlumb.fire("jsPlumbDemoLoaded", instance);
 
 });

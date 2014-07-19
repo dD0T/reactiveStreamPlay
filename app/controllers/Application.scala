@@ -175,6 +175,8 @@ object Application extends Controller {
   }
 
   def events = Action {
+    sup ! DetectConfiguration //FIXME: This obviously isn't a good way to handle this. Need history replay.
+
     Ok.feed(eventEnumerator through EventSource())
       .as("text/event-stream")
   }
