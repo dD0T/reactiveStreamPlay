@@ -90,10 +90,9 @@ $(function() {
     };
 
     $("#flowchart-demo").click(function (evt) {
-        var mode = $("input[name=mode]:checked").val();
-        if (mode != "add") return;
-
-        var nodetype = $("input[name=nodetype]:checked").val();
+        var selected = $("input[name=nodetype]:checked")
+        var nodetype = selected.val();
+        if (nodetype == "") return;
 
         pos = contentPosFromEvent(evt)
 
@@ -108,6 +107,14 @@ $(function() {
                 "y": String(pos.y | 0)
             })
         })
+
+        // We created an element. Flip back to move mode
+        selected.parent("label")
+            .removeClass("active")
+
+        $("#movemode").prop("checked", true)
+            .parent("label")
+                .toggleClass("active")
     });
 
     /**
