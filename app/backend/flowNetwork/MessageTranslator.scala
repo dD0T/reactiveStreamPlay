@@ -25,14 +25,14 @@ class MessageTranslator(val chan: Channel[JsValue]) extends Actor with ActorLogg
 
     case ((sourceId: Long, targetId: Long), Configuration(data)) =>
       // Connection configuration update
-      chan.push(Json.obj("source" -> sourceId.toString,
-                        "target" -> targetId.toString,
+      chan.push(Json.obj("sourceId" -> sourceId.toString,
+                        "targetId" -> targetId.toString,
                         "config" -> Json.toJson(data)))
 
     case ((sourceId: Long, targetId: Long), None) =>
       // Connection deletion
-      chan.push(Json.obj("source" -> sourceId.toString,
-                         "target" -> targetId.toString,
+      chan.push(Json.obj("sourceId" -> sourceId.toString,
+                         "targetId" -> targetId.toString,
                          "deleted" -> "1"))
   }
 }

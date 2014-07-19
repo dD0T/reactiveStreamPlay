@@ -315,8 +315,11 @@ $(function() {
 
         instance.bind("beforeDetach", function(conn) {
             with (conn) {
-                deleteConnection(sourceId, targetId);
-                delete connections[sourceId + targetId];
+                if (conn.sourceId + conn.targetId in connections) {
+                    // Ok. This is the user disconnecting this.
+                    deleteConnection(sourceId, targetId);
+                    delete connections[sourceId + targetId];
+                }
             }
             return true;
         })
