@@ -321,15 +321,24 @@ $(function() {
 
     jsPlumb.fire("jsPlumbDemoLoaded", instance);
 
-    var feed = new EventSource("/flow/events")
-    feed.onerror = function(e) {
-        // Lost connection, wipe slate clean. We'll be restored on reconnect
+    var deleteAllNodes = function() {
         instance.doWhileSuspended(function () {
             $(".window").each(function (idx, obj) {
-                instance.remove(obj)
+                instance.remove(obj);
             });
-        })
-    }
+        });
+    };
+
+    var feed = new EventSource("/flow/events");
+    feed.onerror = function(e) {
+        // Lost connection, wipe slate clean. We'll be restored on reconnect
+        deleteAllNodes()
+    };
+
+    $("#resetbutton").click(function() {
+        deleteAllNodes();
+        $.ajax('flow/reset');
+    });
 
     feed.onmessage = function(e) {
         var data = JSON.parse(e.data);
