@@ -100,8 +100,8 @@ $(function() {
     };
 
     var postNode = function(nodetype, position) {
-        var px = position.x | 0
-        var py = position.y | 0
+        var px = Math.round(position.x)
+        var py = Math.round(position.y)
         console.log("Trying to create " + nodetype + " node at (" + px + "," + py + ")");
         $.ajax({url: "/flow/nodes",
             method: "POST",
