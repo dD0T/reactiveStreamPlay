@@ -98,12 +98,15 @@ $(function() {
         pos = contentPosFromEvent(evt)
 
         console.log("Trying to create " + nodetype + " node at (" + pos.x + "," + pos.y + ")");
-        $.ajax({url: "/add",
-            data: {
-                "nodetype": nodetype,
-                "x": pos.x | 0,
-                "y": pos.y | 0
-            }
+        $.ajax({url: "/node",
+            method: "POST",
+            processData: false,
+            contentType: "text/json",
+            data: JSON.stringify({
+                "nodeType": nodetype,
+                "x": String(pos.x | 0),
+                "y": String(pos.y | 0)
+            })
         })
     });
 
@@ -153,9 +156,9 @@ $(function() {
         });
     }
 
-    var pushConfig = function(id, config) {
+    var putConfig = function(id, config) {
         $.ajax({url: "/node/" + id,
-                method: "POST",
+                method: "PUT",
                 processData: false,
                 data: JSON.stringify(config),
                 contentType: "text/json"
@@ -229,7 +232,7 @@ $(function() {
             node.draggable({
                 stop: function (e) {
                     pos = node.position();
-                    pushConfig(node.attr('id'), {
+                    putConfig(node.attr('id'), {
                         x: String(pos.left),
                         y: String(pos.top)
                     })

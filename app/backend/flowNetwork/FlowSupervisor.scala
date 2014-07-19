@@ -9,8 +9,8 @@ case class Register(observer: ActorRef)
 
 case object DetectConfiguration
 
-case class LookupId(id: Long)
-case class LookupObj(obj: ActorRef)
+case class LookupObj(id: Long)
+case class LookupId(obj: ActorRef)
 
 case object GetFlowObjectTypes
 case class CreateFlowObject(what: String, x: Int, y: Int)
@@ -126,16 +126,16 @@ class FlowSupervisor extends Actor with ActorLogging {
         case None => log.error(s"Asked to forward configuration for unknown id $id")
       }
 
-    case LookupId(id) =>
+    case LookupObj(id) =>
       flowIdToObject.get(id) match {
-        case Some(obj) => sender() ! obj
-        case None => sender() ! null
+        case Some(obj) => sender() ! Some(obj)
+        case None => sender() ! None
       }
 
-    case LookupObj(obj) =>
+    case LookupId(obj) =>
       flowObjectToId.get(obj) match {
-        case Some(id) => sender() ! id
-        case None => sender() ! null
+        case Some(id) => sender() ! Some(id)
+        case None => sender() ! None
       }
 
     case GetConnections =>

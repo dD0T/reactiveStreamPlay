@@ -3,15 +3,16 @@
 # ~~~~
 
 # Home page
-GET         /                    controllers.Application.overview
-GET         /flow                controllers.Application.flow
-GET         /add                 controllers.Application.add(nodetype: String, x: Int, y: Int)
-GET         /connect             controllers.Application.connect(sourceId: Long, targetId: Long)
-GET         /disconnect          controllers.Application.disconnect(sourceId: Long, targetId: Long)
-GET         /events              controllers.Application.events
-GET         /reset               controllers.Application.reset
-POST        /node/:id            controllers.Application.postNode(id: Long)
-DELETE      /node/:id            controllers.Application.deleteNode(id: Long)
+GET           /                    controllers.Application.overview
+GET           /flow                controllers.Application.flow
+GET           /connect             controllers.Application.connect(sourceId: Long, targetId: Long)
+GET           /disconnect          controllers.Application.disconnect(sourceId: Long, targetId: Long)
+GET           /events              controllers.Application.events
+GET           /reset               controllers.Application.reset
+POST          /node                controllers.Application.postNode
+GET           /node/:id            controllers.Application.getNode(id: Long)
+PUT           /node/:id            controllers.Application.putNode(id: Long)
+DELETE        /node/:id            controllers.Application.deleteNode(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file        controllers.Assets.at(path="/public", file)
+GET           /assets/*file        controllers.Assets.at(path="/public", file)
