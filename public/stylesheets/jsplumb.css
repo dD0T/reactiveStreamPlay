@@ -142,7 +142,27 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     overflow: auto;
     padding: 0px;
     margin: 0px;
-    height: 80vh;
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#nodetypemenu {
+    z-index: 3000;
+    position: absolute;
+    top: 100px;
+    left: 10px;
+    padding: 1em;
+    width: 12em;
+    border-radius: 5px;
+    border: 1px solid #e7e7e7;
+    background-color: #f8f8f8;
+}
+
+.navbar {
+    z-index: 3000;
 }
 
 .flowchart-demo {

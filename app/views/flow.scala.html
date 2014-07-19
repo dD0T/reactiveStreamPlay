@@ -10,8 +10,7 @@
 }
 
 @main("RSP - Flow", scripts, styles) {
-    <div class="container-fluid" id="container">
-    <div class="col-xs-2 btn-group btn-group-vertical" data-toggle="buttons">
+    <div id="nodetypemenu" class="btn-group btn-group-vertical" data-toggle="buttons">
         <div class="btn-group" data-toggle="buttons">
             <label class="btn btn-default active">
                 <input id="movemode" type="radio" name="nodetype" value="" checked><span class="glyphicon glyphicon-move pull-left"></span> Move
@@ -38,13 +37,10 @@
             <label class="btn btn-default">
                 <input type="radio" name="nodetype" value="FlowAccumulator"><span class="glyphicon glyphicon-stats pull-left"></span> Accumulator
             </label>
-
         </div>
     </div>
-        <div class="col-xs-10" id="content">
-            <div class="demo flowchart-demo" id="flowchart-demo">
 
-            </div>
-        </div>
+    <div id="content">
+        <div class="demo flowchart-demo" id="flowchart-demo" />
     </div>
 }
