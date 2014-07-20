@@ -12,7 +12,7 @@ object FlowAccumulator {
 }
 
 class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
-  extends FlowNode(id, name, FlowAccumulator.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
+  extends FlowNode(id, name, FlowAccumulator.nodeType, x, y, 0, 1) with FlowFieldOfInterest {
 
   var accumulator: Double = 0.0
 
@@ -21,14 +21,13 @@ class FlowAccumulator(id: Long, name: String,  x: Int, y: Int)
     "display" -> "accumulator"
   ))
 
-  //TODO: Think about exposing this over the property interface in a sane way
-  override def active: Receive = {
+  override def receive: Receive = super.receive orElse {
     case o: FlowObject =>
       o.contentAsDouble(fieldOfInterest) match {
         case Some(value) =>
           accumulator += value
-          target ! NumberObject(NextFlowUID(), o, accumulator)
-          configUpdated() //FIXME: This shouldn't be updated all the time
+          configUpdated()
+
         case None => log.debug(s"Message ${o.uid} doesn't have a Double convertible field $fieldOfInterest")
       }
   }
