@@ -234,6 +234,20 @@ $(function() {
 
                 displayString += '</tbody>' +
                     '</table>'
+            } if (cfg.nodeType == "Frequency") {
+                // For frequency we are displaying a toplist so we want position, value and count in a table
+                displayString = '<table class="table">' +
+                    '<thead><tr><th>#</th><th>Value</th><th>Count</th></tr></thead>' +
+                    '<tbody>';
+
+                var toplist = JSON.parse(cfg.toplist);
+
+                for (var n = 0; n < toplist.length; n++) {
+                    displayString += '<td>' + (n+1) + '</td><td>' + toplist[n].value + '</td><td>' + toplist[n].count + '</td></tr>';
+                }
+
+                displayString += '</tbody>' +
+                    '</table>'
             } else {
 
                 var displayFields = cfg.display.split(",").map(function (n) {
