@@ -201,11 +201,13 @@ $(function() {
             return;
         }
 
+        var oldcfg = node.data("config");
+
         var displayString = "";
         if ("display" in cfg) {
             var displayFields = cfg.display.split(",").map(function (n) {
                 // Should do the trick most of the time. Obviously some edge cases
-                var value = (cfg[n] == "" || cfg[n] == " " || isNaN(cfg[n]))
+                var value = (cfg[n] === "" || cfg[n] === " " || isNaN(cfg[n]))
                     ? ('"' + cfg[n] + '"') // Quote non-numbers
                     : ((cfg[n] % 1 === 0) // Check if Int
                     ? cfg[n] // Int
@@ -226,9 +228,18 @@ $(function() {
             }
         }
 
-        node.css("left", cfg.x + "px")
-            .css("top", cfg.y + "px")
-            .data("config", cfg); // Update data in node
+        if (oldcfg === undefined || oldcfg.x != cfg.x || oldcfg.y != cfg.y) {
+            // Position updates require jsPlumb to do some work
+            // we don't want to do this everytime anything in the
+            // node changes as this can become quite expensive real
+            // fast.
+
+            instance.doWhileSuspended(function () {
+                node.css("left", cfg.x + "px")
+                    .css("top", cfg.y + "px")
+            })
+        }
+        node.data("config", cfg); // Update data in node
 
         node.find("strong").html(cfg.name);
 
@@ -444,14 +455,15 @@ $(function() {
         if ("id" in data && "config" in data) {
             var cfg = data.config;
 
-            instance.doWhileSuspended(function () {
-                var newNode = false;
-                if (!doesExist(cfg.id)) {
+            var newNode = false;
+            if (!doesExist(cfg.id)) {
+                instance.doWhileSuspended(function () {
                     createNewNode(cfg);
-                    newNode = true;
-                }
-                updateNodeFromConfiguration(cfg, newNode);
-            })
+                });
+                newNode = true;
+            }
+            updateNodeFromConfiguration(cfg, newNode);
+
         } else {
             // Connection data
             var cfg = data.config;
