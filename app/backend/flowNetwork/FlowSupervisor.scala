@@ -1,9 +1,12 @@
 package backend.flowNetwork
 
 import akka.actor._
-import play.api.libs.json.JsValue
-import play.api.libs.iteratee.Concurrent.Channel
 import backend.NextFlowUID
+import backend.flowNetwork.sinks.FlowCounter
+import backend.flowNetwork.sources.{FlowIpsumSource, FlowNumberSource}
+import backend.flowNetwork.transformations._
+import play.api.libs.iteratee.Concurrent.Channel
+import play.api.libs.json.JsValue
 
 case class Register(observer: ActorRef)
 
@@ -37,9 +40,6 @@ object FlowSupervisor {
 }
 
 class FlowSupervisor extends Actor with ActorLogging {
-  import akka.actor.OneForOneStrategy
-  import akka.actor.SupervisorStrategy._
-  import scala.concurrent.duration._
 
   val ordinaryFlowObjects = Map[String, (Long, String, Int, Int) => Props](
     FlowNumberSource.nodeType -> FlowNumberSource.props,

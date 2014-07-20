@@ -1,7 +1,7 @@
-package backend.flowNetwork
+package backend.flowNetwork.transformations
 
-import akka.actor.{ActorRef, Actor, Props}
-import akka.event.Logging
+import akka.actor.{ActorRef, Props}
+import backend.flowNetwork.{FlowNode, AddTarget, RemoveTarget}
 import backend.flowTypes.FlowObject
 
 case class MembershipUpdate(targets: Set[ActorRef])

@@ -3,6 +3,8 @@ import backend.NextFlowUID
 import backend.flowNetwork._
 import backend.flowNetwork.SetTarget
 import backend.flowNetwork.ThroughputUpdate
+import backend.flowNetwork.sources.FlowNumberSource
+import backend.flowNetwork.transformations._
 import backend.flowTypes.{WordObject, FlowObject, TwitterMessage, Sentiment}
 import org.junit.runner.RunWith
 import org.specs2.mutable._

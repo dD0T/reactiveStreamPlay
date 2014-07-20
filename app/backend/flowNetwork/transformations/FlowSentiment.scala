@@ -1,6 +1,7 @@
-package backend.flowNetwork
+package backend.flowNetwork.transformations
 
 import akka.actor.Props
+import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 
 object FlowSentiment {
   var nodeType = "FlowSentiment"

@@ -1,9 +1,9 @@
-package backend.flowNetwork
+package backend.flowNetwork.transformations
 
-import akka.actor.{ActorLogging, ActorRef, Props, Actor}
-import backend.flowTypes.{WordObject, FlowObject}
-import akka.event.Logging
+import akka.actor.Props
 import backend.NextFlowUID
+import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
+import backend.flowTypes.{FlowObject, WordObject}
 
 object FlowTokenizer {
   var nodeType = "FlowTokenizer"

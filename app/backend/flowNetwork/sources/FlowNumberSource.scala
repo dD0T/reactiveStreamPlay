@@ -1,11 +1,12 @@
-package backend.flowNetwork
+package backend.flowNetwork.sources
 
-import akka.actor.{Props, ActorRef, Actor}
-import akka.event.Logging
+import akka.actor.Props
 import backend.NextFlowUID
-import scala.util.Random
-import backend.flowTypes.{NumberObject, Sentiment}
+import backend.flowNetwork.{FlowNode, TargetableFlow}
+import backend.flowTypes.NumberObject
+
 import scala.concurrent.duration._
+import scala.util.Random
 
 object FlowNumberSource {
   var nodeType = "FlowNumberSource"

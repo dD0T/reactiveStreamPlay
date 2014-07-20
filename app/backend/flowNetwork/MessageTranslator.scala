@@ -1,7 +1,6 @@
 package backend.flowNetwork
 
 import akka.actor.{Actor, ActorLogging, Props}
-import play.api.libs
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.json._
 

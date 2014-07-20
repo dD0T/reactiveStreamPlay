@@ -1,8 +1,8 @@
-package backend.flowNetwork
+package backend.flowNetwork.transformations
 
 import akka.actor.Props
-import backend.NextFlowUID
-import backend.flowTypes.{NumberObject, FlowObject}
+import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
+import backend.flowTypes.FlowObject
 
 case class SetFilter(filter: String)
 case object GetFilter

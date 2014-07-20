@@ -1,10 +1,12 @@
-package backend.flowNetwork
+package backend.flowNetwork.sources
 
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.Props
 import backend.NextFlowUID
+import backend.flowNetwork.{FlowNode, TargetableFlow}
 import backend.flowTypes.TwitterMessage
-import scala.concurrent.duration._
 import external.LoremIpsum
+
+import scala.concurrent.duration._
 
 object FlowIpsumSource {
   var nodeType = "FlowIpsumSource"

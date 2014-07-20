@@ -1,6 +1,8 @@
-package backend.flowNetwork
+package backend.flowNetwork.sinks
 
 import akka.actor.Props
+import backend.flowNetwork.FlowNode
+import backend.flowNetwork.sources.FlowIpsumSource
 import backend.flowTypes.FlowObject
 
 

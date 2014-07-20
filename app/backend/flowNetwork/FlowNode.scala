@@ -1,6 +1,6 @@
 package backend.flowNetwork
 
-import akka.actor.{Props, ActorRef, ActorLogging, Actor}
+import akka.actor.{Actor, ActorLogging, Props}
 
 object FlowNode {
   def props(id: Long, name:String, nodeType:String, x: Int, y: Int, outputs: Int, inputs: Int): Props =

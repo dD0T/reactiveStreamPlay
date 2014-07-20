@@ -4,7 +4,9 @@ import java.util.NoSuchElementException
 
 import akka.actor.ActorRef
 import akka.util.Timeout
+import backend.flowNetwork
 import backend.flowNetwork._
+import backend.flowNetwork.transformations._
 import play.api._
 import akka.pattern.ask
 import play.api.mvc._
@@ -157,7 +159,7 @@ object Application extends Controller {
 
     request.body.validate[Map[String,String]].asOpt match {
       case Some(config) =>
-          sup ! {(id, backend.flowNetwork.Configuration(config))}
+          sup ! {(id, flowNetwork.Configuration(config))}
           NoContent // No waiting for backend
       case None =>
         BadRequest(s"Invalid configuration in ${request.body}")

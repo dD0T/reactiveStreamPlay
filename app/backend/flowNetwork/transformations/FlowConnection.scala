@@ -1,8 +1,10 @@
-package backend.flowNetwork
+package backend.flowNetwork.transformations
 
-import akka.actor.{ActorRef, Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import akka.event.Logging
+import backend.flowNetwork.{GetConfiguration, Configuration, Stopping, Shutdown}
 import backend.flowTypes.FlowObject
+
 import scala.concurrent.duration._
 
 object FlowConnection {
