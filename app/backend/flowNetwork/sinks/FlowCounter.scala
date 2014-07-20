@@ -17,6 +17,7 @@ class FlowCounter(id: Long, name: String,  x: Int, y: Int)
   var count = 0
 
   addConfigMapGetters(() => Map(
+    "active" -> "1",
     "count" -> count.toString,
     "display" -> "count"
   ))
