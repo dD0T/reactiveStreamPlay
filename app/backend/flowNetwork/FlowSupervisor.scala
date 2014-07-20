@@ -42,13 +42,15 @@ class FlowSupervisor extends Actor with ActorLogging {
   import scala.concurrent.duration._
 
   val ordinaryFlowObjects = Map[String, (Long, String, Int, Int) => Props](
-    FlowSource.nodeType -> FlowSource.props,
+    FlowNumberSource.nodeType -> FlowNumberSource.props,
     FlowCrossbar.nodeType -> FlowCrossbar.props,
     FlowFilter.nodeType -> FlowFilter.props,
     FlowTokenizer.nodeType -> FlowTokenizer.props,
     FlowFrequency.nodeType -> FlowFrequency.props,
     FlowSentiment.nodeType -> FlowSentiment.props,
-    FlowAccumulator.nodeType -> FlowAccumulator.props
+    FlowAccumulator.nodeType -> FlowAccumulator.props,
+    FlowIpsumSource.nodeType -> FlowIpsumSource.props,
+    FlowCounter.nodeType -> FlowCounter.props
   )
 
   object newActorName {

@@ -80,7 +80,7 @@ class FlowNetworkSpec extends Specification with NoTimeConversions {
        "in new AkkaTestkitSpecs2Support" to create a new 'context'. */
     "send FlowObjects to the registered target in expected intervals" in new AkkaTestkitSpecs2Support {
       within(2.1 second) {
-        val source = system.actorOf(FlowSource.props(0, "source", 100, 122), "flowSource")
+        val source = system.actorOf(FlowNumberSource.props(0, "source", 100, 122), "flowSource")
         source ! SetTarget(self)
         expectMsgType[Sentiment]
         val a = TestProbe()
