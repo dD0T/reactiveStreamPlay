@@ -390,8 +390,8 @@ $(function() {
         var changedProperties = {};
         var originalData = $('#propertytable').data("config");
         $("#propertytable tbody tr").each(function(idx, value) {
-            var k = value.children[0].innerText;
-            var v = value.children[1].innerText;
+            var k = value.children[0].textContent;
+            var v = value.children[1].textContent;
 
             if (k in originalData && originalData[k] != v) {
 
