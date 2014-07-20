@@ -205,20 +205,53 @@ $(function() {
 
         var displayString = "";
         if ("display" in cfg) {
-            var displayFields = cfg.display.split(",").map(function (n) {
-                // Should do the trick most of the time. Obviously some edge cases
-                var value = (cfg[n] === "" || cfg[n] === " " || isNaN(cfg[n]))
-                    ? ('"' + cfg[n] + '"') // Quote non-numbers
-                    : ((cfg[n] % 1 === 0) // Check if Int
-                    ? cfg[n] // Int
-                    : Number(cfg[n]).toFixed(4)); // Round double
+            if (cfg.nodeType == "Trace") {
+                // For the trace we want a table representing the received messages
+                displayString = '<table class="table">' +
+                    '<thead><tr><th>Time</th><th>Field</th><th>Value</th></tr></thead>' +
+                    '<tbody>';
 
-                return n + ": " + value
-            });
-            if (displayFields.length > 0) {
-                displayString = displayFields.join('<br />');
+                var history = JSON.parse(cfg.history);
+                history.forEach(function(msg, idx) {
+                    var first = true;
+                    for (f in msg) { // Order
+                        displayString += '<tr>';
+                        if (first) {
+                            var fields = Object.keys(msg).length;
+                            var time = (new Date(Number(msg.uid)))
+                                .toISOString()
+                                .substring(0,19)
+                                .split("T")
+                                .reverse()
+                                .join("<br/>");
+                            displayString += '<td rowspan="' + fields + '">' + time + '</td>';
+                            first = false;
+                        }
+                        displayString += '<td>' + f + '</td><td>' + msg[f] + '</td>'
+                        displayString += '</tr>'
+                    }
+                });
+
+                displayString += '</tbody>' +
+                    '</table>'
+            } else {
+
+                var displayFields = cfg.display.split(",").map(function (n) {
+                    // Should do the trick most of the time. Obviously some edge cases
+                    var value = (cfg[n] === "" || cfg[n] === " " || isNaN(cfg[n]))
+                        ? ('"' + cfg[n] + '"') // Quote non-numbers
+                        : ((cfg[n] % 1 === 0) // Check if Int
+                        ? cfg[n] // Int
+                        : Number(cfg[n]).toFixed(4)); // Round double
+
+                    return n + ": " + value
+                });
+                if (displayFields.length > 0) {
+                    displayString = displayFields.join('<br />');
+                }
             }
         }
+
 
         if ("active" in cfg) {
             if (cfg.active == true) {
@@ -247,6 +280,7 @@ $(function() {
             node.find("p")
                 .show()
                 .html(displayString);
+
         } else {
             node.find("p")
                 .hide()
@@ -301,10 +335,10 @@ $(function() {
         // New object
         $("#flowchart-demo").append(
             '<div class="window" id="' + cfg.id + '">' +
-                '<span class="configbutton glyphicon glyphicon-wrench pull-left"></span>' +
-                '<strong/>' +
-                '<span class="removebutton glyphicon glyphicon-remove pull-right"></span>' +
-                '<p/>'+
+            '<span class="configbutton glyphicon glyphicon-wrench pull-left"></span>' +
+            '<strong/>' +
+            '<span class="removebutton glyphicon glyphicon-remove pull-right"></span>' +
+            '<p/>' +
             '</div>');
 
         // We offer op to three inputs or outputs depending on how many

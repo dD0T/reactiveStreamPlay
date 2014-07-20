@@ -33,12 +33,17 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     -moz-box-shadow: 2px 2px 19px #e0e0e0;
     -moz-border-radius:0.5em;
     border-radius:0.5em;
-    width:5em; height:5em;
+
     position:absolute;
     color:black;
     padding:0.5em;
-    width:150px;
-    height:100px;
+
+    min-width: 12em;
+    min-height: 8em;
+
+    max-width: 35em;
+    max-height: 80vh;
+    overflow: auto;
 
     -webkit-transition: -webkit-box-shadow 0.15s ease-in;
     -moz-transition: -moz-box-shadow 0.15s ease-in;

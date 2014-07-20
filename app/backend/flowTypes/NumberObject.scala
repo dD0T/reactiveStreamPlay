@@ -6,7 +6,7 @@ case class NumberObject(override val uid: Long, override val originUid: Long, nu
     case _ => None
   }
 
-  override def fields(): List[String] = List("default", "number")
+  override def fields(): List[String] = List("number")
 }
 
 object NumberObject {

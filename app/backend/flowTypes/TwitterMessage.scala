@@ -6,10 +6,7 @@ case class TwitterMessage(override val uid: Long, message: String) extends FlowO
     case _ => None
   }
 
-  override def fields(): List[String] = List(
-    "default",
-    "message"
-  )
+  override def fields(): List[String] = List("message")
 
   override val originUid: Long = -1
 

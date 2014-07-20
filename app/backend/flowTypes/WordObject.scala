@@ -6,7 +6,7 @@ case class WordObject(override val uid: Long, override val originUid: Long, word
     case _ => None
   }
 
-  override def fields(): List[String] = List("default", "word")
+  override def fields(): List[String] = List("word")
 }
 
 object WordObject {

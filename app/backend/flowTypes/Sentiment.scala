@@ -1,7 +1,7 @@
 package backend.flowTypes
 
 case class Sentiment(override val uid: Long, override val originUid: Long, positiveScore: Double, negativeScore: Double) extends FlowObject {
-  override def fields(): List[String] = List("default", "sentiment")
+  override def fields(): List[String] = List("positive", "negative", "objective")
 
   override def content(field: String): Option[Any] = field match {
     case "default" | "sentiment" => Some(positiveScore - negativeScore)

@@ -35,4 +35,12 @@ trait FlowObject {
 
   /** List of fields available from content functions */
   def fields(): List[String]
+
+  /**
+   * Returns a String->String map representation of the flow object.
+   */
+  def asStringMap(): Map[String, String] =
+    Map("uid" -> uid.toString,
+        "originUid" -> originUid.toString
+    ) ++ (fields map {f => (f, contentAsString(f).get) }).toMap
 }
