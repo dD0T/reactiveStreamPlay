@@ -15,7 +15,7 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 
 .window, .label {
     text-align:center;
-    z-index:24;
+    z-index:-6;
     cursor:pointer;
     box-shadow: 2px 2px 19px #aaa;
     -o-box-shadow: 2px 2px 19px #aaa;
@@ -95,16 +95,16 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
 
 /** Z-INDEX **/
 
-._jsPlumb_connector { z-index:18; }
-._jsPlumb_endpoint { z-index:19; }
-._jsPlumb_overlay { z-index:20; }
+._jsPlumb_connector { z-index:-12; }
+._jsPlumb_endpoint { z-index:-11; }
+._jsPlumb_overlay { z-index:-10; }
 
 .aLabel {
   background-color:white; 
   padding:0.4em; 
   font:12px sans-serif; 
   color:#444;
-  z-index:21;
+  z-index:-9;
   border:1px dotted gray;
   opacity:0.8;
   filter:alpha(opacity=80);
@@ -127,7 +127,8 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     filter:alpha(opacity=80);
 
     text-align:center;
-    z-index:20; position:absolute;
+    z-index:-10;
+    position:absolute;
     background-color:#eeeeef;
     color:black;
     font-family:helvetica;padding:0.5em;
@@ -147,10 +148,10 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     position: absolute;
     top: 0px;
     left: 0px;
+    z-index:-40;
 }
 
 #nodetypemenu {
-    z-index: 3000;
     position: absolute;
     top: 100px;
     left: 10px;
@@ -161,14 +162,12 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     background-color: #f8f8f8;
 }
 
-.navbar {
-    z-index: 3000;
-}
 
 .flowchart-demo {
     position: relative;
     height:10000px;
     width: 10000px;
+    z-index:-30;
 }
 
 .flowchart-demo .window:hover {
@@ -187,15 +186,15 @@ path, ._jsPlumb_endpoint { cursor:pointer; }
     border:1px dotted red;
 }
 
-.flowchart-demo ._jsPlumb_connector { z-index:4; }
-.flowchart-demo ._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:21;cursor:pointer; }
+.flowchart-demo ._jsPlumb_connector { z-index:-26; }
+.flowchart-demo ._jsPlumb_endpoint, .endpointTargetLabel, .endpointSourceLabel{ z-index:-9;cursor:pointer; }
 
 .flowchart-demo .aLabel {
     background-color:white;
     padding:0.4em;
     font:12px sans-serif;
     color:#444;
-    z-index:21;
+    z-index:-9;
     border:1px dotted gray;
     opacity:0.8;
     filter:alpha(opacity=80);

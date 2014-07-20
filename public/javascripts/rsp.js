@@ -100,8 +100,8 @@ $(function() {
     };
 
     var postNode = function(nodetype, position) {
-        var px = Math.round(position.x)
-        var py = Math.round(position.y)
+        var px = Math.round(position.x);
+        var py = Math.round(position.y);
         console.log("Trying to create " + nodetype + " node at (" + px + "," + py + ")");
         $.ajax({url: "/flow/nodes",
             method: "POST",
@@ -160,21 +160,17 @@ $(function() {
         return result
     };
 
-    var disconnect = function(sourceId, targetId) {
-
-    };
-
     $("#flowchart-demo").click(function (evt) {
-        var selected = $("input[name=nodetype]:checked")
+        var selected = $("input[name=nodetype]:checked");
         var nodetype = selected.val();
         if (nodetype == "") return;
 
-        position = contentPosFromEvent(evt)
+        position = contentPosFromEvent(evt);
         postNode(nodetype, position);
 
         // We created an element. Flip back to move mode
         selected.parent("label")
-            .removeClass("active")
+            .removeClass("active");
 
         $("#movemode").prop("checked", true)
             .parent("label")
@@ -232,6 +228,7 @@ $(function() {
 
         node.css("left", cfg.x + "px")
             .css("top", cfg.y + "px")
+            .data("config", cfg); // Update data in node
 
         node.find("strong").html(cfg.name);
 
@@ -258,13 +255,44 @@ $(function() {
         }
     };
 
+    var updateModalFromData = function(data) {
+        // Sort properties before display
+        var keys = [];
+        for (var key in data) { keys.push(key); }
+        keys.sort();
+
+        // Set title
+        $('#configurationEditor h4').text("Editing " + data["name"]);
+
+        // Set table content
+        var tablecontent = "";
+        keys.forEach(function(prop) {
+            tablecontent += "<tr><td>"+ prop + "</td><td>"+ data[prop] + "</td></tr>";
+        });
+
+        $('#propertytable tbody').html(tablecontent);
+        $('#propertytable')
+            .data("config", data)
+            .editableTableWidget();
+
+    };
+
+    var editNode = function(id) {
+        var data = $("#"+id).data("config");
+
+        updateModalFromData(data);
+        // Trigger modal config dialog
+        $("#configurationEditor").modal('show');
+    };
+
     var createNewNode = function(cfg) {
         console.log("Creating new node " + cfg.id);
         // New object
         $("#flowchart-demo").append(
             '<div class="window" id="' + cfg.id + '">' +
+                '<span class="configbutton glyphicon glyphicon-wrench pull-left"></span>' +
                 '<strong/>' +
-                '<span class="glyphicon glyphicon-remove pull-right"></span>' +
+                '<span class="removebutton glyphicon glyphicon-remove pull-right"></span>' +
                 '<p/>'+
             '</div>');
 
@@ -273,9 +301,14 @@ $(function() {
         var inputs = ["Left", "TopLeft", "BottomLeft"].slice(0, cfg.inputs);
         var outputs = ["Right", "BottomRight", "TopRight"].slice(0, cfg.outputs);
 
-        $("#"+cfg.id+" span").click(function(evt) {
+        $("#"+cfg.id+" span.removebutton").click(function(evt) {
             // Deletion
             deleteNode(cfg.id);
+        });
+
+        $("#"+cfg.id+" span.configbutton").click(function(evt) {
+            // Configuration
+            editNode(cfg.id)
         });
 
         instance.draggable(cfg.id, {
@@ -353,6 +386,29 @@ $(function() {
         $.ajax('flow/reset');
     });
 
+    $("#saveeditor").click(function() {
+        var changedProperties = {};
+        var originalData = $('#propertytable').data("config");
+        $("#propertytable tbody tr").each(function(idx, value) {
+            var k = value.children[0].innerText;
+            var v = value.children[1].innerText;
+
+            if (k in originalData && originalData[k] != v) {
+
+                changedProperties[k] = v;
+            }
+        });
+        console.log(changedProperties);
+        if (Object.keys(changedProperties).length > 0) {
+            // Have some changes
+            console.log("Updating " + changedProperties["id"]);
+            console.log(changedProperties);
+            putNode(originalData["id"], changedProperties);
+        }
+
+        $("#configurationEditor").modal('hide');
+    });
+
     var guiDisconnect = function(sourceId, targetId) {
         // Disconnect
         var k = sourceId + targetId;
@@ -362,7 +418,7 @@ $(function() {
             delete connections[k];
             instance.detach(conn);
         }
-    }
+    };
 
     var feed = new EventSource("/flow/events");
     feed.onerror = function(e) {
