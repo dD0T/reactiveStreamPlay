@@ -60,9 +60,9 @@ object LoremIpsum {
   private val _n = System.getProperty("line.separator")
   private val random = new Random
 
-  def randomWord:String = lipsumwords(random.nextInt(lipsumwords.length - 1))
+  def randomWord:String = lipsumwords(random.nextInt(lipsumwords.length))
 
-  def randomPunctuation:String = punctuation(random.nextInt(punctuation.length - 1))
+  def randomPunctuation:String = punctuation(random.nextInt(punctuation.length))
 
   def words(count:Int):String =
     if (count > 0) (randomWord + " " + words(count - 1)).trim() else ""
