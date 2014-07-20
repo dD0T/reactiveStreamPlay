@@ -1,9 +1,8 @@
-package backend.flowNetwork.transformations
+package backend.flowNetwork.sinks
 
 import akka.actor.Props
-import backend.NextFlowUID
-import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
-import backend.flowTypes.{FlowObject, NumberObject}
+import backend.flowNetwork.{FlowFieldOfInterest, FlowNode}
+import backend.flowTypes.FlowObject
 
 object FlowAccumulator {
   var nodeType = "Accumulator"

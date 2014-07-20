@@ -1,7 +1,7 @@
-package backend.flowNetwork.transformations
+package backend.flowNetwork.sinks
 
 import akka.actor.Props
-import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
+import backend.flowNetwork.{FlowFieldOfInterest, FlowNode}
 import backend.flowTypes.FlowObject
 import play.api.libs.json.Json
 

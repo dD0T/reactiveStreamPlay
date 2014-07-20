@@ -2,7 +2,7 @@ package backend.flowNetwork
 
 import akka.actor._
 import backend.NextFlowUID
-import backend.flowNetwork.sinks.{FlowTrace, FlowCounter}
+import backend.flowNetwork.sinks.{FlowAccumulator, FlowFrequency, FlowTrace, FlowCounter}
 import backend.flowNetwork.sources.{FlowIpsumSource, FlowNumberSource}
 import backend.flowNetwork.transformations._
 import play.api.libs.iteratee.Concurrent.Channel
