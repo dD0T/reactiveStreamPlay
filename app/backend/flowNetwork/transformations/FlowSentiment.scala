@@ -4,7 +4,8 @@ import akka.actor.Props
 import backend.NextFlowUID
 import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 import backend.flowTypes.{Sentiment, FlowObject}
-import scala.collection.immutable.HashSet
+import play.api.Play
+
 import scala.io.Source
 
 //TODO: Should probably utilize http://sentiwordnet.isti.cnr.it/ instead of assuming equally scored good/badwords
@@ -15,8 +16,8 @@ object FlowSentiment {
   private def loadWordsetFromFile(file: String): Set[String] =
     (Source.fromFile(file).getLines() filter (l => !(l startsWith ";"))).toSet
 
-  val positiveWords = loadWordsetFromFile("positive-words.txt")
-  val negativeWords = loadWordsetFromFile("negative-words.txt")
+  val positiveWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive").get)
+  val negativeWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative").get)
 
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSentiment(id, name, x, y))
 }
