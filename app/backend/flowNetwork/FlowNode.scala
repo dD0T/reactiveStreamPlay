@@ -67,8 +67,17 @@ class FlowNode(val id:Long, var name: String, val nodeType: String,
     configMaps = configMaps :+ map
   }
 
-  /** Sends configuration to parent */
-  def configUpdated() = context.parent ! Configuration(config)
+  var lastUpdate = System.currentTimeMillis;
+  val minDeltaTBetweenCfgsInMs = 250
+
+  /** Sends configuration to parent with rate limiting */
+  def configUpdated(force: Boolean = false) = {
+    val time = System.currentTimeMillis
+    if (force || time - lastUpdate > minDeltaTBetweenCfgsInMs) {
+      context.parent ! Configuration(config)
+      lastUpdate = time
+    }
+  }
 
   /** Create full config map on demand */
   def config = {
@@ -104,11 +113,11 @@ class FlowNode(val id:Long, var name: String, val nodeType: String,
     case Configuration(changes) =>
       changes foreach { case (k,v) =>
         try { configSetters((k,v)) }
-        catch { case e: Exception => log.error(e, s"Couldn't set $k to $v") }
+        catch { case e: Exception => log.warning(s"Couldn't set $k to $v") }
       }
       // Send configuration update to system, if client was opportunistic this will
       // reset it in case we failed to set something
-      configUpdated()
+      configUpdated(force = true)
 
     case Shutdown =>
       log.info("Asked to shutdown")

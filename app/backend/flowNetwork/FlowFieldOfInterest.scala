@@ -1,7 +1,5 @@
 package backend.flowNetwork
 
-import backend.flowNetwork.FlowNode
-
 trait FlowFieldOfInterest extends FlowNode {
   var fieldOfInterest: String = "default"
 

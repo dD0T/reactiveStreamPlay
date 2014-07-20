@@ -1,7 +1,6 @@
 package backend.flowNetwork
 
-import akka.actor.{ActorRef, ActorLogging, Actor}
-import backend.flowNetwork.FlowNode
+import akka.actor.ActorRef
 
 case class SetTarget(target: ActorRef)
 case class AddTarget(target: ActorRef)
