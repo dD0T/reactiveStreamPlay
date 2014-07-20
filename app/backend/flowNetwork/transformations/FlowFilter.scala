@@ -9,7 +9,7 @@ case object GetFilter
 case object GetDropped
 
 object FlowFilter {
-  var nodeType = "FlowFilter"
+  var nodeType = "Filter"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFilter(id, name, x, y))
 }
 

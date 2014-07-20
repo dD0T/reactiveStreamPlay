@@ -6,7 +6,7 @@ import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 import backend.flowTypes.{FlowObject, WordObject}
 
 object FlowTokenizer {
-  var nodeType = "FlowTokenizer"
+  var nodeType = "Tokenizer"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowTokenizer(id, name, x, y))
 }
 

@@ -9,7 +9,7 @@ import external.LoremIpsum
 import scala.concurrent.duration._
 
 object FlowIpsumSource {
-  var nodeType = "FlowIpsumSource"
+  var nodeType = "IpsumSource"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowIpsumSource(id, name, x, y))
 }
 

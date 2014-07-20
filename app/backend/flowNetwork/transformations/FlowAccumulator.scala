@@ -6,7 +6,7 @@ import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 import backend.flowTypes.{FlowObject, NumberObject}
 
 object FlowAccumulator {
-  var nodeType = "FlowAccumulator"
+  var nodeType = "Accumulator"
   def props(id: Long, name: String,  x: Int, y: Int): Props =
     Props(new FlowAccumulator(id, name, x, y))
 }

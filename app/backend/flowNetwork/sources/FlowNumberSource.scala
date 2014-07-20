@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 object FlowNumberSource {
-  var nodeType = "FlowNumberSource"
+  var nodeType = "NumberSource"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowNumberSource(id, name, x, y))
 }
 

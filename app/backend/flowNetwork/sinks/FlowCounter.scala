@@ -7,7 +7,7 @@ import backend.flowTypes.FlowObject
 
 
 object FlowCounter {
-  var nodeType = "FlowCounter"
+  var nodeType = "Counter"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowCounter(id, name, x, y))
 }
 

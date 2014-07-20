@@ -7,7 +7,7 @@ import backend.flowTypes.FlowObject
 import scala.util.Sorting
 
 object FlowFrequency {
-  var nodeType = "FlowFrequency"
+  var nodeType = "Frequency"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFrequency(id, name, x, y))
 }
 

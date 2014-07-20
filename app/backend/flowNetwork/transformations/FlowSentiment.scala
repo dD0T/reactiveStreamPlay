@@ -4,7 +4,7 @@ import akka.actor.Props
 import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 
 object FlowSentiment {
-  var nodeType = "FlowSentiment"
+  var nodeType = "Sentiment"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSentiment(id, name, x, y))
 }
 
