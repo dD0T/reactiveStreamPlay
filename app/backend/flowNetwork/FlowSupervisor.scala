@@ -3,7 +3,7 @@ package backend.flowNetwork
 import akka.actor._
 import backend.NextFlowUID
 import backend.flowNetwork.sinks.{FlowAccumulator, FlowFrequency, FlowTrace, FlowCounter}
-import backend.flowNetwork.sources.{FlowIpsumSource, FlowNumberSource}
+import backend.flowNetwork.sources.{FlowTwitterSource, FlowIpsumSource, FlowNumberSource}
 import backend.flowNetwork.transformations._
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.json.JsValue
@@ -51,7 +51,8 @@ class FlowSupervisor extends Actor with ActorLogging {
     FlowAccumulator.nodeType -> FlowAccumulator.props,
     FlowIpsumSource.nodeType -> FlowIpsumSource.props,
     FlowCounter.nodeType -> FlowCounter.props,
-    FlowTrace.nodeType -> FlowTrace.props
+    FlowTrace.nodeType -> FlowTrace.props,
+    FlowTwitterSource.nodeType -> FlowTwitterSource.props
   )
 
   object newActorName {
