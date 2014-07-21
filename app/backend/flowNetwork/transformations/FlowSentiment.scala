@@ -6,28 +6,13 @@ import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 import backend.flowTypes.{Sentiment, FlowObject}
 import play.api.Play
 
-import scala.io.Source
-
 //TODO: Should probably utilize http://sentiwordnet.isti.cnr.it/ instead of assuming equally scored good/badwords
 
 object FlowSentiment {
   var nodeType = "Sentiment"
 
-  private def loadWordsetFromFile(configFile: Option[String]): Set[String] = configFile match {
-    case Some(file) => try {
-      (Source.fromFile(file)
-        .getLines() filter (l => !(l startsWith ";") && !(l isEmpty))).toSet
-    } catch {
-      case e:Exception =>
-        println(s"Failed to load $file because of $e")
-        Set()
-    }
-    case None => Set()
-  }
-
-
-  val positiveWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive"))
-  val negativeWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative"))
+  val positiveWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive"))
+  val negativeWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative"))
 
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSentiment(id, name, x, y))
 }
