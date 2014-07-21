@@ -13,13 +13,13 @@ object FlowTokenizer {
 class FlowTokenizer(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowTokenizer.nodeType, x, y, 1 ,1) with TargetableFlow with FlowFieldOfInterest {
 
-  var separators = Array[Char](' ','.',',','!','?')
+  var separators = Array[Char](' ','.',',','!','?','\n')
 
   val configStringSeperator = " and "
 
   addConfigMapGetters(() => Map(
     "separators" -> separators.mkString,
-    "display" -> "separators"
+    "display" -> "separators,field"
   ))
 
   addConfigSetters({

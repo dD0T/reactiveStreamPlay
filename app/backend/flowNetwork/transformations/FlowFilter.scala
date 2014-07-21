@@ -24,7 +24,7 @@ class FlowFilter(id: Long, name: String,  x: Int, y: Int)
   addConfigMapGetters(() => Map(
     "filter" -> filter,
     "dropped" -> dropped.toString(),
-    "display" -> "filter,dropped"
+    "display" -> "filter,field,dropped"
   ))
 
   override def active: Receive = {

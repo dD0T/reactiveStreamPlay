@@ -11,14 +11,14 @@ import play.api.Play
 object FlowSentiment {
   var nodeType = "Sentiment"
 
-  val positiveWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive"))
-  val negativeWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative"))
-
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSentiment(id, name, x, y))
 }
 
 class FlowSentiment(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowSentiment.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
+
+  val positiveWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive"))
+  val negativeWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative"))
 
   var accumulatedPositive = 0
   var accumulatedNegative = 0
@@ -27,9 +27,9 @@ class FlowSentiment(id: Long, name: String,  x: Int, y: Int)
     "positive" -> accumulatedPositive.toString,
     "negative" -> accumulatedNegative.toString,
     "sentiment" -> (accumulatedPositive - accumulatedNegative).toString,
-    "#positive@list" -> FlowSentiment.positiveWords.size.toString,
-    "#negative@list" -> FlowSentiment.negativeWords.size.toString,
-    "display" -> "positive,negative,sentiment"
+    "#positive@list" -> positiveWords.size.toString,
+    "#negative@list" -> negativeWords.size.toString,
+    "display" -> "positive,negative,sentiment,field"
   ))
 
   override def active: Receive = {
@@ -43,8 +43,8 @@ class FlowSentiment(id: Long, name: String,  x: Int, y: Int)
           var positive = 0
           var negative = 0
 
-          if (FlowSentiment.positiveWords contains word) positive += 1
-          if (FlowSentiment.negativeWords contains word) negative += 1
+          if (positiveWords contains word) positive += 1
+          if (negativeWords contains word) negative += 1
 
           accumulatedPositive += positive
           accumulatedNegative += negative

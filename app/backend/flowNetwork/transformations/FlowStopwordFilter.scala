@@ -7,18 +7,18 @@ import play.api.Play
 
 object FlowStopwordFilter {
   var nodeType = "StopwordFilter"
-  val stopWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("stopword.list")) map (_.toLowerCase)
-
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowStopwordFilter(id, name, x, y))
 }
 
 class FlowStopwordFilter(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowStopwordFilter.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 
+  val stopWords = Tools.loadWordsetFromFile(Play.current.configuration.getString("stopword.list")) map (_.toLowerCase)
+
   var dropped: Int = 0
 
   addConfigMapGetters(() => Map(
-    "#entries" -> FlowStopwordFilter.stopWords.size.toString,
+    "#entries" -> stopWords.size.toString,
     "dropped" -> dropped.toString,
     "display" -> "#entries,dropped"
   ))
@@ -27,7 +27,7 @@ class FlowStopwordFilter(id: Long, name: String,  x: Int, y: Int)
     case o: FlowObject =>
       o.contentAsString(fieldOfInterest) match {
         case Some(value) =>
-          if (!(FlowStopwordFilter.stopWords contains value.toLowerCase)) target ! o
+          if (!(stopWords contains value.toLowerCase)) target ! o
           else {
             dropped += 1
             configUpdated()
