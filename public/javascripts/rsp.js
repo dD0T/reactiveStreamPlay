@@ -306,8 +306,8 @@ $(function() {
                 stop: function (e) {
                     pos = node.position();
                     putNode(node.attr('id'), {
-                        x: String(pos.left),
-                        y: String(pos.top)
+                        x: String(Math.round(pos.left)),
+                        y: String(Math.round(pos.top))
                     })
                 }
             })
