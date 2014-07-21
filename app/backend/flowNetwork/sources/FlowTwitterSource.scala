@@ -12,7 +12,7 @@ object FlowTwitterSource {
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowTwitterSource(id, name, x, y))
 }
 
-case class Tweet(message: String)
+case class Tweet(name: String, message: String, lang: String)
 
 class FlowTwitterSource(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowTwitterSource.nodeType, x, y, 1, 0) with TargetableFlow {
@@ -26,10 +26,15 @@ class FlowTwitterSource(id: Long, name: String,  x: Int, y: Int)
     .build
 
   val statusListener = new StatusListener {
-    override def onStatus(status: Status) =
-      self ! Tweet(status.getText) // Pass message to us via akka to escape possible thread nastiness
+    override def onStatus(status: Status) = {
+      val screenName = status.getUser.getScreenName
+      val text = status.getText
+      val lang = status.getLang
 
-    override def onDeletionNotice(statusDeletionNotice: StatusDeletionNotice) = log.warning("Deleted")
+      self ! Tweet(screenName, text, lang) // Pass message to us via akka to escape possible thread nastiness
+    }
+
+    override def onDeletionNotice(statusDeletionNotice: StatusDeletionNotice) = {}
 
     override def onTrackLimitationNotice(numberOfLimitedStatuses: Int) = log.warning("Limit")
 
@@ -78,14 +83,14 @@ class FlowTwitterSource(id: Long, name: String,  x: Int, y: Int)
   ))
 
   override def passive: Receive = {
-    case Tweet(_) =>
+    case Tweet(_,_,_) =>
       received += 1 // Discard
       configUpdated()
   }
   override def active: Receive = {
-    case Tweet(message) =>
+    case Tweet(name, message, lang) =>
       received += 1
-      target ! TwitterMessage(NextFlowUID(), message)
+      target ! TwitterMessage(NextFlowUID(), name, message, lang)
       configUpdated()
   }
 }

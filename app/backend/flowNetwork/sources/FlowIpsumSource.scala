@@ -27,7 +27,7 @@ class FlowIpsumSource(id: Long, name: String,  x: Int, y: Int)
 
   override def active = {
     case Tick =>
-      target ! TwitterMessage(NextFlowUID(), LoremIpsum.sentence)
+      target ! TwitterMessage(NextFlowUID(), LoremIpsum.randomWord, LoremIpsum.sentence, "Latinlike")
       count += 1
       configUpdated()
   }
