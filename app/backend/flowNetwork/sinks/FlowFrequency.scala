@@ -52,22 +52,20 @@ class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
           val n = frequencies(content)
           total += 1
 
-          var changed: Boolean = false
-          if (toplist.size < toplistLimit) {
-            toplist.append((content, n))
-            changed = true
-          } else if (toplist.last._2 < n) {
+          if (toplist.size < toplistLimit || toplist.last._2 < n) {
             // Object enters toplist or is already there. Try to find it to...
             toplist.zipWithIndex.find({ case ((obj, _), _) => obj == content}) match {
               case Some((_, idx)) =>
                 toplist(idx) = (content, n) // update or...
-              case None =>
-                toplist(toplistLimit - 1) = (content, n) // if not found replace the last
+              case None => {
+                if (toplist.size < toplistLimit) {
+                  toplist.append((content, n))
+                } else {
+                  toplist(toplistLimit - 1) = (content, n) // if not found replace the last
+                }
+              }
             }
-            changed = true
-          }
 
-          if (changed) {
             // New toplist, resort and distribute
             toplist = Sorting.stableSort(toplist, (A: (Any, Int), B: (Any, Int)) => (A, B) match {
               case ((_, a), (_, b)) if a > b => true
