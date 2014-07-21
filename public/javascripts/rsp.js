@@ -234,7 +234,7 @@ $(function() {
 
                 displayString += '</tbody>' +
                     '</table>'
-            } if (cfg.nodeType == "Frequency") {
+            } else if (cfg.nodeType == "Frequency") {
                 // For frequency we are displaying a toplist so we want position, value and count in a table
                 displayString = '<table class="table">' +
                     '<thead><tr><th>#</th><th>Value</th><th>Count</th></tr></thead>' +
