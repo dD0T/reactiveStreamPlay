@@ -14,7 +14,7 @@ object FlowTrace {
 class FlowTrace(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowTrace.nodeType, x, y, 0, 1) {
 
-  var depth = 5
+  var depth = 1
   var history = scala.collection.mutable.Queue.empty[FlowObject]
 
   addConfigMapGetters(() => Map(
