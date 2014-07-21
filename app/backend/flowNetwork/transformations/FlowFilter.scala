@@ -4,10 +4,6 @@ import akka.actor.Props
 import backend.flowNetwork.{FlowNode, FlowFieldOfInterest, TargetableFlow}
 import backend.flowTypes.FlowObject
 
-case class SetFilter(filter: String)
-case object GetFilter
-case object GetDropped
-
 object FlowFilter {
   var nodeType = "Filter"
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFilter(id, name, x, y))
@@ -27,7 +23,7 @@ class FlowFilter(id: Long, name: String,  x: Int, y: Int)
 
   addConfigMapGetters(() => Map(
     "filter" -> filter,
-    "dropped" -> dropped.toString(), //TODO: Not pushed to client when changed. Add a "watchedfields" trait or sth.
+    "dropped" -> dropped.toString(),
     "display" -> "filter,dropped"
   ))
 
@@ -37,7 +33,7 @@ class FlowFilter(id: Long, name: String,  x: Int, y: Int)
         case Some(value) =>
           if (value matches filter) target ! o
           else dropped += 1
-          configUpdated() //FIXME: This shouldn't trigger on every cycle
+          configUpdated()
         case None => log.debug(s"Message ${o.uid} doesn't have a String convertible field $fieldOfInterest")
       }
   }

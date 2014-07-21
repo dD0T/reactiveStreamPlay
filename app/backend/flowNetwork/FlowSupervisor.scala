@@ -58,7 +58,8 @@ class FlowSupervisor extends Actor with ActorLogging {
     FlowIpsumSource.nodeType -> FlowIpsumSource.props,
     FlowCounter.nodeType -> FlowCounter.props,
     FlowTrace.nodeType -> FlowTrace.props,
-    FlowTwitterSource.nodeType -> FlowTwitterSource.props
+    FlowTwitterSource.nodeType -> FlowTwitterSource.props,
+    FlowMultiplier.nodeType -> FlowMultiplier.props
   )
 
   object newActorName {
