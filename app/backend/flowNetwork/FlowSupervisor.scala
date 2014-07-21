@@ -8,14 +8,20 @@ import backend.flowNetwork.transformations._
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.json.JsValue
 
+/** Registers an observer for node and connection configuration updates */
 case class Register(observer: ActorRef)
 
+/** Triggers a complete re-discovery of the whole network configuration */
 case object DetectConfiguration
 
+/** Requests Some[ActorRef] of the connection between given source and target from Supervisor */
 case class LookupConnection(sourceId: Long, targetId: Long)
+/** Requests Some[ActorRef] of the node with the given id */
 case class LookupObj(id: Long)
+/** Requests Some[Long] ID of the node with the given ActorRef */
 case class LookupId(obj: ActorRef)
 
+/** Returns a list of possible flow objects */
 case object GetFlowObjectTypes
 case object GetFlowObjects
 case class CreateFlowObject(what: String, x: Int, y: Int)
