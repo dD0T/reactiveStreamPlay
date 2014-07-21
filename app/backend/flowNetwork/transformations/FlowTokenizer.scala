@@ -13,23 +13,29 @@ object FlowTokenizer {
 class FlowTokenizer(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowTokenizer.nodeType, x, y, 1 ,1) with TargetableFlow with FlowFieldOfInterest {
 
-  var separator: String = " "
+  var separators = Array[Char](' ','.',',','!','?')
+
+  val configStringSeperator = " and "
 
   addConfigMapGetters(() => Map(
-    "separator" -> separator,
-    "display" -> "separator"
+    "separators" -> separators.mkString,
+    "display" -> "separators"
   ))
 
   addConfigSetters({
-    case ("separator", sep) =>
-      log.info(s"Updating separator to $sep")
-      separator = sep
+    case ("separators", sep) =>
+      log.info(s"Updating separators to chars: $sep")
+      separators = sep.toCharArray
   })
 
   override def active: Receive = {
     case o: FlowObject =>
       o.contentAsString(fieldOfInterest) match {
-        case Some(content) => content.split(separator).foreach(target ! WordObject(NextFlowUID(), o, _))
+        case Some(content) =>
+          content.split(separators)
+                 .filter(!_.isEmpty)
+                 .foreach(target ! WordObject(NextFlowUID(), o, _))
+
         case None => log.debug(s"Message ${o.uid} doesn't have a String convertible field $fieldOfInterest")
       }
   }
