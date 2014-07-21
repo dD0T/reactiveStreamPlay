@@ -13,11 +13,21 @@ import scala.io.Source
 object FlowSentiment {
   var nodeType = "Sentiment"
 
-  private def loadWordsetFromFile(file: String): Set[String] =
-    (Source.fromFile(file).getLines() filter (l => !(l startsWith ";"))).toSet
+  private def loadWordsetFromFile(configFile: Option[String]): Set[String] = configFile match {
+    case Some(file) => try {
+      (Source.fromFile(file)
+        .getLines() filter (l => !(l startsWith ";") && !(l isEmpty))).toSet
+    } catch {
+      case e:Exception =>
+        println(s"Failed to load $file because of $e")
+        Set()
+    }
+    case None => Set()
+  }
 
-  val positiveWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive").get)
-  val negativeWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative").get)
+
+  val positiveWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.positive"))
+  val negativeWords = loadWordsetFromFile(Play.current.configuration.getString("sentiment.negative"))
 
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowSentiment(id, name, x, y))
 }
