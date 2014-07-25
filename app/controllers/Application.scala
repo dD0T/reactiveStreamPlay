@@ -20,8 +20,6 @@ import scala.concurrent.duration._
 
 object Application extends Controller {
   val sup = Akka.system.actorOf(FlowSupervisor.props(), name = "flowSupervisor")
-  val (eventEnumerator, eventChannel) = Concurrent.broadcast[JsValue]
-  sup ! EventChannel(eventChannel)
 
   def overview = Action {
     implicit request => Ok(views.html.overview())
@@ -176,11 +174,12 @@ object Application extends Controller {
     NoContent // Not waiting for backend
   }
 
-  def events = Action {
-    Akka.system.scheduler.scheduleOnce(100 milliseconds, sup, DetectConfiguration) //FIXME: This obviously isn't a good way to handle this. Need history replay.
+  def events = Action.async {
+    implicit val timeout = Timeout(100 millis)
 
-    Ok.feed(eventEnumerator through EventSource())
-      .as("text/event-stream")
+    for {
+      enumerator <- (sup ? RequestEnumerator).mapTo[Enumerator[JsValue]]
+    } yield Ok.feed(enumerator through EventSource()).as("text/event-stream")
   }
 
   def reset = Action {

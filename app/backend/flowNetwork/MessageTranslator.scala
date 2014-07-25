@@ -33,5 +33,10 @@ class MessageTranslator(val chan: Channel[JsValue]) extends Actor with ActorLogg
       chan.push(Json.obj("sourceId" -> sourceId.toString,
                          "targetId" -> targetId.toString,
                          "deleted" -> "1"))
+
+    case Shutdown =>
+      log.info("Asked to shutdown")
+      chan.eofAndEnd()
+      context.stop(self)
   }
 }

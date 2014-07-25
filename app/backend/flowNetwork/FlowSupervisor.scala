@@ -6,10 +6,13 @@ import backend.flowNetwork.sinks.{FlowAccumulator, FlowFrequency, FlowTrace, Flo
 import backend.flowNetwork.sources.{FlowTwitterSource, FlowIpsumSource, FlowNumberSource}
 import backend.flowNetwork.transformations._
 import play.api.libs.iteratee.Concurrent.Channel
+import play.api.libs.iteratee.{Concurrent, Enumerator}
 import play.api.libs.json.JsValue
+import views.html.helper.input
 
 /** Registers an observer for node and connection configuration updates */
 case class Register(observer: ActorRef)
+case class Unregister(observer: ActorRef)
 
 /** Triggers a complete re-discovery of the whole network configuration */
 case object DetectConfiguration
@@ -31,10 +34,10 @@ case object GetConnections
 case class Connect(source: Long, target: Long, attribus: Map[String, String])
 case class Disconnect(source: Long, target: Long)
 
-case class EventChannel(chan: Channel[JsValue])
-
 case object Shutdown
 case object Stopping
+
+case object RequestEnumerator
 
 /** Used for representation and update of the (key -> value) configuration in a Node/Connection */
 case class Configuration(config: Map[String, String])
@@ -80,6 +83,8 @@ class FlowSupervisor extends Actor with ActorLogging {
   var currentNodeConfigurations = scala.collection.mutable.Map.empty[Long, Configuration]
   var currentConnectionConfigurations = scala.collection.mutable.Map.empty[(Long, Long), Configuration]
 
+  var translators =  scala.collection.mutable.Map.empty[Long, ActorRef]
+
   var observers = scala.collection.mutable.Set.empty[ActorRef]
 
   private def connectionsFor(id: Long): scala.collection.mutable.Map[(Long, Long), ActorRef] =
@@ -113,14 +118,48 @@ class FlowSupervisor extends Actor with ActorLogging {
   def receive = {
     case GetFlowObjectTypes => sender() ! ordinaryFlowObjects.keys.toList
 
-    case EventChannel(channel: Channel[JsValue]) =>
-      log.info("Starting event channel translator")
-      val translator = context.actorOf(MessageTranslator.props(channel), name = "messageTranslator")
-      self ! Register(translator)
+    case RequestEnumerator =>
+      import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+      val uid = NextFlowUID()
+      log.info(s"Translator reservation $uid")
+
+      val shutdownTranslator = () => {
+        translators.get(uid) match {
+          case Some(translator) =>
+            log.info(s"Shutting down translator $uid")
+            translators.remove(uid)
+            self ! Unregister(translator)
+            translator ! Shutdown
+          case None => log.info(s"Translator $uid already gone")
+        }
+      }
+
+      val enumerator = Concurrent.unicast[JsValue](
+        onStart = (channel) => {
+          // Seems like someone actually
+          log.info(s"Starting new translator for client session $uid")
+          val translator = context.actorOf(MessageTranslator.props(channel), name = s"messageTranslator$uid")
+          translators += uid -> translator
+          self ! Register(translator)
+          // Push current state
+          currentNodeConfigurations map { case (k,v) => translator ! (k, v) }
+          currentConnectionConfigurations map { case (k,v) => translator ! (k,v) }
+        },
+        onComplete = { shutdownTranslator() },
+        onError = (_,_) => shutdownTranslator
+      ).onDoneEnumerating(
+          callback = shutdownTranslator
+      )
+
+      sender() ! enumerator
 
     case Register(observer) =>
       log.info(s"${observer} registered for updates")
       observers += observer
+
+    case Unregister(observer) =>
+      log.info(s"${observer} removed from updates")
 
     case DetectConfiguration =>
       log.info(s"${sender()} triggered configuration update")
