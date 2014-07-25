@@ -77,6 +77,9 @@ class FlowSupervisor extends Actor with ActorLogging {
   var connectionObjToIds = scala.collection.mutable.Map.empty[ActorRef, (Long, Long)]
   var connectionIdsToObj = scala.collection.mutable.Map.empty[(Long, Long), ActorRef]
 
+  var currentNodeConfigurations = scala.collection.mutable.Map.empty[Long, Configuration]
+  var currentConnectionConfigurations = scala.collection.mutable.Map.empty[(Long, Long), Configuration]
+
   var observers = scala.collection.mutable.Set.empty[ActorRef]
 
   private def connectionsFor(id: Long): scala.collection.mutable.Map[(Long, Long), ActorRef] =
@@ -94,6 +97,7 @@ class FlowSupervisor extends Actor with ActorLogging {
           case None => // Fine, already gone
         }
 
+        currentConnectionConfigurations.remove((sourceId, targetId))
         connectionIdsToObj.remove((sourceId, targetId))
 
         notifyObservers((sourceId, targetId), None)
@@ -119,10 +123,10 @@ class FlowSupervisor extends Actor with ActorLogging {
       observers += observer
 
     case DetectConfiguration =>
-      log.info(s"${sender()} triggered configuration detection")
-      // Request all node configurations
-      flowObjectToId foreach { case (obj, _) => obj ! GetConfiguration}
-      connectionIdsToObj foreach { case ((_, _), con) => con ! GetConfiguration}
+      log.info(s"${sender()} triggered configuration update")
+      // Notify about current configuration state
+      currentNodeConfigurations map { case (k,v) => notifyObservers(k, v) }
+      currentConnectionConfigurations map { case (k,v) => notifyObservers(k,v) }
 
     case CreateFlowObject(objectType, x, y) =>
       ordinaryFlowObjects.get(objectType) match {
@@ -158,6 +162,7 @@ class FlowSupervisor extends Actor with ActorLogging {
           flowObjectToId.remove(obj)
 
           sender() ! Some(id) // Ack delete of ID
+          currentNodeConfigurations.remove(id)
           notifyObservers(id, None)
 
         case None =>
@@ -167,10 +172,14 @@ class FlowSupervisor extends Actor with ActorLogging {
 
     case Configuration(data) =>
       flowObjectToId.get(sender()) match {
-        case Some(id) => notifyObservers(id, Configuration(data))
+        case Some(id) =>
+          currentNodeConfigurations(id) = Configuration(data)
+          notifyObservers(id, Configuration(data))
         case None =>
           connectionObjToIds.get(sender()) match {
-            case Some((sourceId, targetId)) => notifyObservers((sourceId, targetId), Configuration(data))
+            case Some((sourceId, targetId)) =>
+              currentConnectionConfigurations((sourceId, targetId)) = Configuration(data)
+              notifyObservers((sourceId, targetId), Configuration(data))
             case None => log.error(s"Received configuration update for untracked actor ${sender()}")
           }
       }
