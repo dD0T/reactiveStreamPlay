@@ -37,6 +37,7 @@ class MessageTranslator(val chan: Channel[JsValue]) extends Actor with ActorLogg
     case Shutdown =>
       log.info("Asked to shutdown")
       chan.eofAndEnd()
+      context.parent ! Stopping
       context.stop(self)
   }
 }
