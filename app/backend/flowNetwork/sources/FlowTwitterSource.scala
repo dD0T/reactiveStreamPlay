@@ -17,6 +17,10 @@ case class Tweet(name: String, message: String, lang: String)
 class FlowTwitterSource(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowTwitterSource.nodeType, x, y, 1, 0) with TargetableFlow {
 
+  case object Disconnected
+  case object Connected
+  var connected = false
+
   val twitterConfig = new conf.ConfigurationBuilder()
     .setOAuthConsumerKey(Play.current.configuration.getString("twitter.consumerkey").get)
     .setOAuthConsumerSecret(Play.current.configuration.getString("twitter.consumersecret").get)
@@ -50,12 +54,17 @@ class FlowTwitterSource(id: Long, name: String,  x: Int, y: Int)
     /**
      * called after connection was established
      */
-    override def onConnect = log.info("Connected")
+    override def onConnect = {
+      self ! Connected
+    }
 
     /**
      * called after connection was disconnected
      */
-    def onDisconnect = log.info("Disconnected")
+    def onDisconnect = {
+      log.info("Disconnected")
+      self ! Disconnected
+    }
 
     /**
      * called before thread gets cleaned up
@@ -77,17 +86,29 @@ class FlowTwitterSource(id: Long, name: String,  x: Int, y: Int)
   }
 
   addConfigMapGetters(() => Map(
-    "active" -> "1",
+    "active" -> (if (connected) "1" else "0"),
     "received" -> received.toString,
     "display" -> "received"
   ))
 
-  override def passive: Receive = {
+  def common: Receive = {
+    case Connected =>
+      log.info("Connected")
+      connected = true
+      configUpdated()
+    case Disconnected =>
+      log.info("Disconnected")
+      connected = false
+      configUpdated()
+  }
+
+  override def passive: Receive = common orElse {
     case Tweet(_,_,_) =>
       received += 1 // Discard
       configUpdated()
   }
-  override def active: Receive = {
+
+  override def active: Receive = common orElse {
     case Tweet(name, message, lang) =>
       received += 1
       target ! TwitterMessage(NextFlowUID(), name, message, lang)
