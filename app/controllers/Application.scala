@@ -6,7 +6,6 @@ import akka.actor.ActorRef
 import akka.util.Timeout
 import backend.flowNetwork
 import backend.flowNetwork._
-import backend.flowNetwork.transformations._
 import play.api._
 import akka.pattern.ask
 import play.api.mvc._
@@ -19,21 +18,40 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 object Application extends Controller {
-  val sup = Akka.system.actorOf(FlowSupervisor.props(), name = "flowSupervisor")
+  val supervisor = Akka.system.actorOf(FlowSupervisor.props(), name = "flowSupervisor")
 
+  /**
+   * GET overview
+   * 
+   * @return RSP overview page.
+   */
   def overview = Action {
     implicit request => Ok(views.html.overview())
   }
 
+  /**
+   * GET flow
+   *
+   * @return Flow network configuration page.
+   */
   def flow = Action {
     implicit request => Ok(views.html.flow())
   }
 
+  /**
+   * POST /flow/connections
+   *
+   * Creates a new connection between the sourceId and
+   * targetId given in the JSON skeleton connection
+   * configuration in the POST body.
+   *
+   * @return URL to new connection on success. BadRequest with reason otherwise.
+   */
   def postConnection = Action.async(parse.json) { request =>
-    def isLong(x:String) = try { x.toLong; true } catch { case _ => false }
+    def isLong(x:String) = try { x.toLong; true } catch { case _:NumberFormatException => false }
 
     request.body.validate[Map[String,String]].asOpt match {
-      case Some(config) if ((config contains "sourceId") && (config contains "targetId")) =>
+      case Some(config) if (config contains "sourceId") && (config contains "targetId") =>
         if (!isLong(config("sourceId")) || !isLong(config("targetId"))) {
           Future.successful(BadRequest(s"Invalid initial configuration. sourceId and targetId must be strings convertible to Long"))
         } else {
@@ -41,10 +59,10 @@ object Application extends Controller {
           val (sourceId, targetId) = (config("sourceId").toLong, config("targetId").toLong)
 
           (for {
-            ((_,_), connection: ActorRef) <- (sup ? Connect(sourceId, targetId, config))
+            ((_,_), connection: ActorRef) <- (supervisor ? Connect(sourceId, targetId, config))
               .mapTo[Option[((ActorRef, ActorRef), ActorRef)]].map(_.get)
 
-          } yield Ok(connection.path.toString) //FIXME: Not very useful ;)
+          } yield Ok(connection.path.toString)
             ).recover {
             case _:NoSuchElementException => BadRequest(s"$sourceId and $targetId either already connected or invalid")
           }
@@ -52,21 +70,32 @@ object Application extends Controller {
     }
   }
 
+  /**
+   * GET flow/connections
+   *
+   * @return Returns JSON array of connection URLs.
+   */
   def getConnections = Action.async {
     implicit val timeout = Timeout(100 millis)
     for {
-      connections <- (sup ? GetConnections).mapTo[Set[(Long, Long)]]
+      connections <- (supervisor ? GetConnections).mapTo[Set[(Long, Long)]]
     } yield Ok(Json.toJson(connections.map {
       case (sourceId, targetId) => routes.Application.getConnection(sourceId, targetId).toString
     }))
   }
 
+  /**
+   * GET flow/connections/:sourceId/:targetId
+   * @param sourceId Connection source
+   * @param targetId Connection target
+   * @return Connection configuration as JSON or NotFound.
+   */
   def getConnection(sourceId: Long, targetId: Long) = Action.async {
     implicit val timeout = Timeout(100 millis)
 
     (for {
-      connection <- (sup ? LookupConnection(sourceId, targetId)).mapTo[Option[ActorRef]].map(_.get)
-      backend.flowNetwork.Configuration(data) <- (connection ? GetConfiguration)
+      connection <- (supervisor ? LookupConnection(sourceId, targetId)).mapTo[Option[ActorRef]].map(_.get)
+      backend.flowNetwork.Configuration(data) <- connection ? GetConfiguration
     } yield Ok(Json.obj(
         "source" -> sourceId.toString,
         "target" -> targetId.toString,
@@ -76,10 +105,17 @@ object Application extends Controller {
     }
   }
 
+  /**
+   * DELETE flow/connections/:sourceId/:targetId
+   *
+   * @param sourceId Connection source
+   * @param targetId Connection target
+   * @return Ok("done") on success. NotFound otherwise.
+   */
   def deleteConnection(sourceId: Long, targetId: Long) = Action.async {
     implicit val timeout = Timeout(500 millis)
     (for {
-      (_,_) <- (sup ? Disconnect(sourceId, targetId)).mapTo[Option[(Long,Long)]].map(_.get)
+      (_,_) <- (supervisor ? Disconnect(sourceId, targetId)).mapTo[Option[(Long,Long)]].map(_.get)
     } yield Ok("done")
     ).recover {
       case _:NoSuchElementException => NotFound
@@ -87,11 +123,13 @@ object Application extends Controller {
   }
 
   /**
+   * POST flow/nodes
+   *
    * Creates a new node. Need nodeType, x and y to be present in the request.
    * @return Request + created id field
    */
   def postNode() = Action.async(parse.json) { request =>
-    def isInt(x:String) = try { x.toInt; true } catch { case _ => false }
+    def isInt(x:String) = try { x.toInt; true } catch { case _:NumberFormatException => false }
 
     request.body.validate[Map[String,String]].asOpt match {
       case Some(config) if config.keySet == Set("nodeType", "x", "y") =>
@@ -102,10 +140,10 @@ object Application extends Controller {
           // Send to backend for execution
 
           implicit val timeout = Timeout(500 millis)
-          var (nodeType, x, y) = (config("nodeType"), config("x").toInt, config("y").toInt)
+          val (nodeType, x, y) = (config("nodeType"), config("x").toInt, config("y").toInt)
 
           (for {
-            (id, node) <- (sup ? CreateFlowObject(nodeType, x, y)).mapTo[Option[(Long, ActorRef)]].map(_.get)
+            (id, node) <- (supervisor ? CreateFlowObject(nodeType, x, y)).mapTo[Option[(Long, ActorRef)]].map(_.get)
             backend.flowNetwork.Configuration(data) <- node ? GetConfiguration
           } yield Created(Json.obj(
               "id" -> id.toString,
@@ -119,17 +157,22 @@ object Application extends Controller {
     }
   }
 
+  /**
+   * GET flow/nodes
+   *
+   * @return List of node URLs as JSON array.
+   */
   def getNodes = Action.async {
     implicit val timeout = Timeout(100 millis)
     for {
-      nodes <- (sup ? GetFlowObjects).mapTo[Set[Long]]
+      nodes <- (supervisor ? GetFlowObjects).mapTo[Set[Long]]
     } yield Ok(Json.toJson(nodes.map {
       id => routes.Application.getNode(id).toString
     }))
   }
 
   /**
-   * GET node/:id
+   * GET flow/nodes/:id
    * @param id Node ID
    * @return Node properties as JSON
    */
@@ -137,8 +180,8 @@ object Application extends Controller {
     implicit val timeout = Timeout(100 millis)
 
     (for {
-      node <- (sup ? LookupObj(id)).mapTo[Option[ActorRef]].map(_.get)
-      backend.flowNetwork.Configuration(data) <- (node ? GetConfiguration)
+      node <- (supervisor ? LookupObj(id)).mapTo[Option[ActorRef]].map(_.get)
+      backend.flowNetwork.Configuration(data) <- node ? GetConfiguration
     } yield Ok(Json.obj(
       "id" -> id.toString,
       "config" -> Json.toJson(data)))
@@ -148,16 +191,14 @@ object Application extends Controller {
   }
 
   /**
-   * PUT node/:id idempotent update function for node
+   * PUT flow/nodes/:id idempotent update function for node
    * @param id Node ID
    * @return NoContent
    */
   def putNode(id: Long) = Action(parse.json) { request =>
-    def isLong(x:String) = try { x.toLong; true } catch { case _ => false }
-
     request.body.validate[Map[String,String]].asOpt match {
       case Some(config) =>
-          sup ! {(id, flowNetwork.Configuration(config))}
+          supervisor ! {(id, flowNetwork.Configuration(config))}
           NoContent // No waiting for backend
       case None =>
         BadRequest(s"Invalid configuration in ${request.body}")
@@ -165,25 +206,36 @@ object Application extends Controller {
   }
 
   /**
-   * DELETE node/:id deletion function for node
+   * DELETE flow/nodes/:id deletion function for node
    * @param id Node ID
    * @return NoContent
    */
   def deleteNode(id: Long) = Action {
-    sup ! DeleteFlowObject(id)
+    supervisor ! DeleteFlowObject(id)
     NoContent // Not waiting for backend
   }
 
+  /**
+   * GET flow/events SSE stream.
+   *
+   * Generates server sent event stream with flow
+   * network configuration updates. Before updates
+   * are received the whole current network configuration
+   * will be streamed out establish synchronisation
+   * with the current server state.
+   *
+   * @return SSE stream.
+   */
   def events = Action.async {
     implicit val timeout = Timeout(100 millis)
 
     for {
-      enumerator <- (sup ? RequestEnumerator).mapTo[Enumerator[JsValue]]
+      enumerator <- (supervisor ? RequestEnumerator).mapTo[Enumerator[JsValue]]
     } yield Ok.feed(enumerator through EventSource()).as("text/event-stream")
   }
 
   def reset = Action {
-    sup ! DetectConfiguration
+    supervisor ! DetectConfiguration
     Ok("Configuration detection started")
   }
 }

@@ -194,7 +194,7 @@ class FlowSupervisor extends Actor with ActorLogging {
         onComplete = { shutdownTranslator() },
         onError = (_,_) => shutdownTranslator()
       ).onDoneEnumerating(
-          callback = shutdownTranslator
+          callback = { shutdownTranslator() }
       )
 
       sender() ! enumerator

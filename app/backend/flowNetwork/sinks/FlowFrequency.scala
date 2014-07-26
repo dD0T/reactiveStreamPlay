@@ -12,9 +12,18 @@ object FlowFrequency {
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowFrequency(id, name, x, y))
 }
 
+/**
+ * Maintains a toplist of the most frequently seen values in the FOI.
+ *
+ * @param id Unique numeric ID of this actor
+ * @param name Display name for this actor
+ * @param x X coordinate on screen
+ * @param y Y coordinate on screen
+ */
 class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowFrequency.nodeType, x, y, 0, 1) with FlowFieldOfInterest {
 
+  /** Frequency counters */
   var frequencies = scala.collection.mutable.HashMap[String, Int]() withDefaultValue 0
   var toplist = scala.collection.mutable.Buffer[(String, Int)]()
   var toplistLimit = 10 // For now uses a fixed top ten list
@@ -48,10 +57,12 @@ class FlowFrequency(id: Long, name: String,  x: Int, y: Int)
     case o: FlowObject =>
       o.contentAsString(fieldOfInterest) match {
         case Some(content) => {
+          // Increase frequency count
           frequencies(content) += 1
           val n = frequencies(content)
           total += 1
 
+          // Update toplist
           if (toplist.size < toplistLimit || toplist.last._2 < n) {
             // Object enters toplist or is already there. Try to find it to...
             toplist.zipWithIndex.find({ case ((obj, _), _) => obj == content}) match {

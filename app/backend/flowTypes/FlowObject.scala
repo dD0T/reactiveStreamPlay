@@ -1,5 +1,13 @@
 package backend.flowTypes
 
+/**
+ * Base trait for all messages processable in the flow network.
+ *
+ * Allows custom messages with fields of different types
+ * to be exposed with a uniform interface enabling type
+ * conversions where needed without having to know the
+ * underlying makeup of the message.
+ */
 trait FlowObject {
   /** Unique identifier of this object instance */
   val uid:Long

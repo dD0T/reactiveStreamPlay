@@ -10,6 +10,14 @@ object FlowTokenizer {
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowTokenizer(id, name, x, y))
 }
 
+/**
+ * Splits the FOI field of incoming messages into Word messages to the target.
+ *
+ * @param id Unique numeric ID of this actor
+ * @param name Display name for this actor
+ * @param x X coordinate on screen
+ * @param y Y coordinate on screen
+ */
 class FlowTokenizer(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowTokenizer.nodeType, x, y, 1 ,1) with TargetableFlow with FlowFieldOfInterest {
 

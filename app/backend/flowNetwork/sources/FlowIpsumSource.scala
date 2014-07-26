@@ -11,6 +11,14 @@ object FlowIpsumSource {
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowIpsumSource(id, name, x, y))
 }
 
+/**
+ * Generates a stream of random twitter LoremIpsum messages.
+ *
+ * @param id Unique numeric ID of this actor
+ * @param name Display name for this actor
+ * @param x X coordinate on screen
+ * @param y Y coordinate on screen
+ */
 class FlowIpsumSource(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowIpsumSource.nodeType, x, y, 1, 0) with TargetableFlow with TickingFlow {
 

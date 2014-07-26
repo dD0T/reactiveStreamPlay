@@ -10,6 +10,14 @@ object FlowStopwordFilter {
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowStopwordFilter(id, name, x, y))
 }
 
+/**
+ * Filters messages whose FOI is found on a preconfigured stop word list.
+ *
+ * @param id Unique numeric ID of this actor
+ * @param name Display name for this actor
+ * @param x X coordinate on screen
+ * @param y Y coordinate on screen
+ */
 class FlowStopwordFilter(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowStopwordFilter.nodeType, x, y, 1, 1) with TargetableFlow with FlowFieldOfInterest {
 

@@ -1,5 +1,13 @@
 package backend.flowTypes
 
+/**
+ * Message expressing the sentiment of another message.
+ *
+ * @param uid Unique message ID.
+ * @param originUid Message the sentiment was derived from.
+ * @param positiveScore Positivity level in the origin message.
+ * @param negativeScore Negativity level in the origin message.
+ */
 case class Sentiment(override val uid: Long, override val originUid: Long, positiveScore: Double, negativeScore: Double) extends FlowObject {
   override def fields(): List[String] = List("positive", "negative", "objective")
 

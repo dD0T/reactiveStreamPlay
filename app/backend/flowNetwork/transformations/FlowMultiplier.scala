@@ -11,6 +11,15 @@ object FlowMultiplier {
   def props(id:Long, name: String,  x: Int, y: Int): Props = Props(new FlowMultiplier(id, name, x, y))
 }
 
+/**
+ * Duplicates incoming messages a configurable amount of times to the target.
+ * @note Does not generate unique IDs for message copies.
+ *
+ * @param id Unique numeric ID of this actor
+ * @param name Display name for this actor
+ * @param x X coordinate on screen
+ * @param y Y coordinate on screen
+ */
 class FlowMultiplier(id: Long, name: String,  x: Int, y: Int)
   extends FlowNode(id, name, FlowMultiplier.nodeType, x, y, 1, 1) with TargetableFlow {
 

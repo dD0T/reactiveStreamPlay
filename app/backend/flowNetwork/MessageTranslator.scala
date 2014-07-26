@@ -8,6 +8,16 @@ object MessageTranslator {
   def props(chan: Channel[JsValue]): Props = Props(new MessageTranslator(chan))
 }
 
+/**
+ * Per user JSON event translator.
+ *
+ * Translates incoming configuration updates from the
+ * Supervisor in to the corresponding json value format
+ * digestible by the frontend and pushes them into the
+ * channel given on construction.
+ *
+ * @param chan Channel transporting updates to client (e.g. via SSE)
+ */
 class MessageTranslator(val chan: Channel[JsValue]) extends Actor with ActorLogging {
   override def receive: Receive = {
     case (id: Long, Configuration(data)) =>
